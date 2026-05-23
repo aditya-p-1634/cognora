@@ -66,6 +66,14 @@
 - [x] Mock data: 4 threads, 2 suggestions, 1 session, per-thread context map
 - [x] Domain types in `src/types/workspace.ts`
 
+### Persistent cognitive continuity
+
+- [x] `src/lib/persistence/` — typed localStorage adapter, validators, v1→v2 migration, `PersistedCognitiveThought` records
+- [x] Full thought payload: text, timestamp, tone, unresolved flag, semantic tags, continuation metadata, thread + context projections
+- [x] `useWorkspacePersistence` — hydrate on init, debounced save, **immediate flush on capture**, `pagehide` / `beforeunload` safety
+- [x] Continuity ordering (newest-first); calm rehydration (relative timestamps, no emergence on restore)
+- [x] `computeContinuityDepth` + `continuitySession` across feed strip, topbar, sidebar
+
 ### Design system (foundation)
 
 - [x] `tokens.css` — full dark palette, spacing, typography, motion tokens
@@ -80,7 +88,7 @@
 | Area | Status |
 |------|--------|
 | Backend / API | None |
-| Persistence (local or remote) | None |
+| Persistence (local or remote) | Local continuity snapshot only (no API) |
 | Authentication | None |
 | Real navigation routes | All nav items link to `/workspace`; switching nav id does not change view |
 | Global search | Input + ⌘K hint only |
@@ -100,6 +108,7 @@
 4. **View session continuity cues** — restored session label, thread count, continuity depth (mock percentage).
 5. **Read continuity whispers** — passive suggestions at the bottom of the feed.
 6. **Experience latent context** when no thread is selected — graph + semantic echoes.
+7. **Resume cognitive state across visits** — captured thoughts, thread selection, and session metadata restore from local storage.
 
 ---
 
@@ -114,6 +123,7 @@
 | Feed scroll | Document-level (main column); not trapped in inner scroll |
 | Context scroll | `ScrollRegion` inside panel when content overflows |
 | Motion | Framer Motion for layout, entrance, selection `layoutId`, drawers |
+| Continuity persistence | Debounced `localStorage` snapshot; hydrate on load |
 
 ---
 
@@ -141,16 +151,16 @@ Derived from mock `unresolvedContinuations`, in-code comments, and architectural
 
 ### Medium term — continuity core
 
-5. **Replace mock data layer** — API or local store for threads, context, sessions; keep `WorkspaceProvider` contract stable where possible.
+5. **Replace mock data layer** — API or remote store for base threads/context; local snapshot already holds captures + workspace selection (extend as needed).
 6. **Semantic relations** — evolve `ContextRelation` / graph from decorative SVG to data-driven (per mock thread `t2`: “edges without taxonomy”).
 7. **Resurfacing signals** — connect feed status transitions and whispers to real rules or user actions.
-8. **Session bridge** — persist and restore session across visits (per mock thread `t3`).
+8. **Session bridge** — [x] local persist/restore shipped; extend with cross-device sync when backend exists.
 
 ### Longer term — platform
 
 9. **Projects & timeline views** — nav entries exist but have no UI.
 10. **Reflections flow** — nav placeholder.
-11. **Real continuity depth metric** — replace hardcoded `72%` with computed signal.
+11. **Real continuity depth metric** — [x] `computeContinuityDepth`; refine weights when more signals exist.
 12. **Auth & multi-user** — profile button placeholder in topbar.
 
 ---

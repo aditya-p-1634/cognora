@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IconButton } from "@/components/ui/icon-button";
 import { design } from "@/config/design";
-import { mockSession } from "@/data/mock/workspace";
-import { useCapture } from "@/providers/workspace-provider";
+import { useCapture, useContinuitySession } from "@/providers/workspace-provider";
 import { SessionPill } from "./session-pill";
 
 interface WorkspaceTopbarProps {
@@ -17,6 +16,7 @@ interface WorkspaceTopbarProps {
 
 export function WorkspaceTopbar({ onMenuToggle, showMenuButton }: WorkspaceTopbarProps) {
   const { openCapture } = useCapture();
+  const { continuitySession } = useContinuitySession();
   return (
     <motion.header
       initial={{ opacity: 0, y: -4 }}
@@ -44,7 +44,7 @@ export function WorkspaceTopbar({ onMenuToggle, showMenuButton }: WorkspaceTopba
       </div>
 
       <div className="hidden items-center gap-4 md:flex">
-        <SessionPill session={mockSession} />
+        <SessionPill session={continuitySession} />
         <div className="h-6 w-px bg-border-default" aria-hidden />
         <div className="text-right">
           <p className="type-label leading-none">Status</p>

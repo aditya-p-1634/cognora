@@ -93,6 +93,8 @@ Keep motion timing aligned: tokens use `--duration-*` and `--ease-*`; `design.mo
 
 **Access:** `useWorkspace()` — throws if used outside `WorkspaceProvider`.
 
+**Persistent continuity (local):** `src/lib/persistence/` owns `localStorage` (`cognora.continuity.v1`, schema v2). Each `PersistedCognitiveThought` stores full capture payload plus feed/context projections. `useWorkspacePersistence` hydrates on mount; debounced save + immediate flush on capture + `pagehide` guard. `WorkspaceProvider` keeps `persistedThoughts` as source of truth; `src/lib/continuity/` supplies depth, merge, and session formatting.
+
 **Not yet present:** URL-synced selection, server state, global stores (Zustand/Redux), React Query, or optimistic updates.
 
 ### Component organization

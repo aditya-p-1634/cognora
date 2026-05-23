@@ -2,10 +2,11 @@
 
 import { motion } from "framer-motion";
 import { design } from "@/config/design";
-import { mockSession } from "@/data/mock/workspace";
+import { useContinuitySession } from "@/providers/workspace-provider";
 
 export function CognitiveStateStrip() {
-  const continuity = 72;
+  const { continuitySession } = useContinuitySession();
+  const continuity = continuitySession.continuityDepth;
 
   return (
     <motion.div
@@ -35,10 +36,10 @@ export function CognitiveStateStrip() {
             <p className="type-label">Session restored</p>
           </div>
           <p className="text-[var(--text-xl)] font-semibold tracking-[var(--tracking-tight)] text-text-primary">
-            {mockSession.label}
+            {continuitySession.label}
           </p>
           <p className="text-[var(--text-sm)] text-text-tertiary">
-            {mockSession.threadCount} threads in flow · {mockSession.startedAt}
+            {continuitySession.threadCount} threads in flow · {continuitySession.startedAt}
           </p>
         </div>
 

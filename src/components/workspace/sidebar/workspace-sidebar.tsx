@@ -5,11 +5,10 @@ import { PanelLeftClose, PanelLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { design } from "@/config/design";
 import { primaryNav, utilityNav } from "@/config/navigation";
-import { mockSession } from "@/data/mock/workspace";
 import { IconButton } from "@/components/ui/icon-button";
 import { NavItemButton } from "./nav-item-button";
 import { SidebarWorkspaceFooter } from "./sidebar-workspace-footer";
-import { useWorkspace } from "@/providers/workspace-provider";
+import { useContinuitySession, useWorkspace } from "@/providers/workspace-provider";
 
 interface WorkspaceSidebarProps {
   collapsed: boolean;
@@ -29,6 +28,7 @@ export function WorkspaceSidebar({
   panelHeight,
 }: WorkspaceSidebarProps) {
   const { activeNav, setActiveNav } = useWorkspace();
+  const { continuitySession } = useContinuitySession();
   const showLabels = isDesktop && !collapsed;
   const width = isDesktop
     ? collapsed
@@ -128,7 +128,7 @@ export function WorkspaceSidebar({
             <span className="relative h-1.5 w-1.5 rounded-full bg-accent-calm" />
           </span>
           <span className="text-[10px] text-text-muted">
-            {mockSession.threadCount} threads in continuity
+            {continuitySession.threadCount} threads in continuity
           </span>
         </div>
       )}

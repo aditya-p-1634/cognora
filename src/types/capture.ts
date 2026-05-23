@@ -15,9 +15,12 @@ export interface CaptureDraft {
 }
 
 export interface CapturedThoughtMeta {
+  /** Full preserved thought — source of truth for resurfacing and search. */
+  thought: string;
   semanticTags: string[];
   emotionalTone: EmotionalTone | null;
   continuationMarker?: string;
+  markUnresolved: boolean;
   capturedAt: string;
 }
 

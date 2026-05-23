@@ -10,20 +10,29 @@ import {
   type ReactNode,
 } from "react";
 import type { NavItemId } from "@/config/navigation";
-import {
-  buildCapturedThread,
-  buildContextFromCapture,
-} from "@/lib/capture/build-captured-thread";
+import { mockSession } from "@/data/mock/workspace";
+import { useWorkspacePersistence } from "@/hooks/use-workspace-persistence";
 import { contextAwakeningDurationMs } from "@/lib/motion/context-transitions";
+import {
+  computeContinuityDepth,
+  formatContinuityRelativeTime,
+  mergeFeedThreads,
+} from "@/lib/continuity";
+import {
+  createPersistedThought,
+  hydrateThoughtsForDisplay,
+  thoughtsToFeedDerivatives,
+  upsertThought,
+} from "@/lib/persistence";
 import {
   EMPTY_CAPTURE_DRAFT,
   type CaptureDraft,
 } from "@/types/capture";
-import type { ThoughtContext, ThoughtThread } from "@/types/workspace";
+import type { PersistedCognitiveThought } from "@/types/persistence";
+import type { ActiveSession, ThoughtContext, ThoughtThread } from "@/types/workspace";
 import {
   getContextForThread,
   getThreadById,
-  mockThreads,
 } from "@/data/mock/workspace";
 
 interface WorkspaceState {
@@ -37,6 +46,9 @@ interface WorkspaceState {
   captureDraft: CaptureDraft;
   capturedThreads: ThoughtThread[];
   recentlyCapturedId: string | null;
+  continuitySession: ActiveSession & { continuityDepth: number };
+  hasPersistedContinuity: boolean;
+  isContinuityHydrated: boolean;
 }
 
 interface WorkspaceActions {
@@ -55,6 +67,15 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 const CAPTURE_EMERGENCE_MS = 2400;
 
+function resolvePersistedSelection(
+  selectedThreadId: string | null,
+  capturedThreads: ThoughtThread[]
+): string | null {
+  if (!selectedThreadId) return null;
+  const threads = mergeFeedThreads(capturedThreads);
+  return threads.some((t) => t.id === selectedThreadId) ? selectedThreadId : null;
+}
+
 function resolveThread(
   threadId: string,
   capturedThreads: ThoughtThread[]
@@ -72,6 +93,22 @@ function resolveContext(
   return captureContextMap[threadId] ?? getContextForThread(threadId);
 }
 
+function buildPersistencePayload(
+  thoughts: PersistedCognitiveThought[],
+  sessionStartedAt: string,
+  sessionLabel: string,
+  activeNav: NavItemId,
+  selectedThreadId: string | null
+) {
+  return {
+    thoughts,
+    sessionStartedAt,
+    sessionLabel,
+    activeNav,
+    selectedThreadId,
+  };
+}
+
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [activeNav, setActiveNav] = useState<NavItemId>("dashboard");
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
@@ -79,12 +116,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const [isCaptureOpen, setIsCaptureOpen] = useState(false);
   const [captureDraft, setCaptureDraft] = useState<CaptureDraft>(EMPTY_CAPTURE_DRAFT);
-  const [capturedThreads, setCapturedThreads] = useState<ThoughtThread[]>([]);
-  const [captureContextMap, setCaptureContextMap] = useState<
-    Record<string, ThoughtContext>
-  >({});
-  const [recentlyCapturedId, setRecentlyCapturedId] = useState<string | null>(
-    null
+  const [persistedThoughts, setPersistedThoughts] = useState<PersistedCognitiveThought[]>(
+    []
+  );
+  const [recentlyCapturedId, setRecentlyCapturedId] = useState<string | null>(null);
+
+  const [sessionLabel, setSessionLabel] = useState(mockSession.label);
+  const [sessionStartedAt, setSessionStartedAt] = useState(() =>
+    new Date().toISOString()
+  );
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [hasPersistedContinuity, setHasPersistedContinuity] = useState(false);
+
+  const { isHydrated: isContinuityHydrated, hydrate, completeHydration, scheduleSave, persistNow } =
+    useWorkspacePersistence();
+
+  const { capturedThreads, captureContextMap } = useMemo(
+    () => thoughtsToFeedDerivatives(persistedThoughts),
+    [persistedThoughts]
   );
 
   const selectedThread = useMemo(
@@ -104,6 +153,100 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
 
   const hasThreadSelection = selectedThreadId !== null;
+
+  const feedThreads = useMemo(
+    () => mergeFeedThreads(capturedThreads),
+    [capturedThreads]
+  );
+
+  const continuitySession = useMemo((): ActiveSession & { continuityDepth: number } => {
+    const continuityDepth = computeContinuityDepth({
+      threadCount: feedThreads.length,
+      capturedCount: persistedThoughts.length,
+      hasSelection: hasThreadSelection,
+      sessionStartedAt,
+      lastSavedAt,
+    });
+
+    return {
+      id: mockSession.id,
+      label: sessionLabel,
+      startedAt: formatContinuityRelativeTime(sessionStartedAt),
+      threadCount: feedThreads.length,
+      continuityDepth,
+    };
+  }, [
+    feedThreads.length,
+    persistedThoughts.length,
+    hasThreadSelection,
+    sessionStartedAt,
+    lastSavedAt,
+    sessionLabel,
+  ]);
+
+  const syncPersistence = useCallback(
+    (
+      thoughts: PersistedCognitiveThought[],
+      options?: { immediate?: boolean }
+    ) => {
+      const payload = buildPersistencePayload(
+        thoughts,
+        sessionStartedAt,
+        sessionLabel,
+        activeNav,
+        selectedThreadId
+      );
+
+      if (options?.immediate) {
+        persistNow(payload);
+        setLastSavedAt(new Date().toISOString());
+        return;
+      }
+
+      scheduleSave(payload);
+    },
+    [
+      sessionStartedAt,
+      sessionLabel,
+      activeNav,
+      selectedThreadId,
+      persistNow,
+      scheduleSave,
+    ]
+  );
+
+  useEffect(() => {
+    const snapshot = hydrate();
+    if (snapshot) {
+      const thoughts = hydrateThoughtsForDisplay(snapshot.thoughts);
+      setPersistedThoughts(thoughts);
+      setActiveNav(snapshot.activeNav);
+      setSelectedThreadId(
+        resolvePersistedSelection(
+          snapshot.selectedThreadId,
+          thoughtsToFeedDerivatives(thoughts).capturedThreads
+        )
+      );
+      setSessionLabel(snapshot.sessionLabel);
+      setSessionStartedAt(snapshot.sessionStartedAt);
+      setLastSavedAt(snapshot.savedAt);
+      setHasPersistedContinuity(thoughts.length > 0);
+    }
+    completeHydration();
+  }, [hydrate, completeHydration]);
+
+  useEffect(() => {
+    if (!isContinuityHydrated) return;
+    syncPersistence(persistedThoughts);
+  }, [
+    isContinuityHydrated,
+    persistedThoughts,
+    activeNav,
+    selectedThreadId,
+    sessionStartedAt,
+    sessionLabel,
+    syncPersistence,
+  ]);
 
   useEffect(() => {
     if (!selectedThreadId) {
@@ -155,15 +298,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (!thought) return;
 
     const id = `cap-${Date.now()}`;
-    const { thread } = buildCapturedThread(captureDraft, id);
-    const contextEntry = buildContextFromCapture(thread, captureDraft);
+    const record = createPersistedThought(captureDraft, id);
+    const nextThoughts = upsertThought(persistedThoughts, record);
 
-    setCapturedThreads((prev) => [thread, ...prev]);
-    setCaptureContextMap((prev) => ({ ...prev, [id]: contextEntry }));
+    setPersistedThoughts(nextThoughts);
     setRecentlyCapturedId(id);
     setIsCaptureOpen(false);
     setCaptureDraft(EMPTY_CAPTURE_DRAFT);
-  }, [captureDraft]);
+    setHasPersistedContinuity(true);
+
+    syncPersistence(nextThoughts, { immediate: true });
+  }, [captureDraft, persistedThoughts, syncPersistence]);
 
   const value = useMemo(
     () => ({
@@ -177,6 +322,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       captureDraft,
       capturedThreads,
       recentlyCapturedId,
+      continuitySession,
+      hasPersistedContinuity,
+      isContinuityHydrated,
       setActiveNav,
       selectThread,
       toggleThread,
@@ -196,6 +344,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       captureDraft,
       capturedThreads,
       recentlyCapturedId,
+      continuitySession,
+      hasPersistedContinuity,
+      isContinuityHydrated,
       selectThread,
       toggleThread,
       openCapture,
@@ -267,9 +418,12 @@ export function useCapture() {
 export function useFeedThreads() {
   const { capturedThreads } = useCapture();
 
-  return useMemo(() => {
-    const capturedIds = new Set(capturedThreads.map((t) => t.id));
-    const base = mockThreads.filter((t) => !capturedIds.has(t.id));
-    return [...capturedThreads, ...base];
-  }, [capturedThreads]);
+  return useMemo(() => mergeFeedThreads(capturedThreads), [capturedThreads]);
+}
+
+export function useContinuitySession() {
+  const { continuitySession, hasPersistedContinuity, isContinuityHydrated } =
+    useWorkspace();
+
+  return { continuitySession, hasPersistedContinuity, isContinuityHydrated };
 }

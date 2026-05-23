@@ -36,9 +36,11 @@ export function buildCapturedThread(
   const excerpt = deriveExcerpt(thought, title);
 
   const meta: CapturedThoughtMeta = {
+    thought,
     semanticTags: draft.semanticTags,
     emotionalTone: draft.emotionalTone,
     continuationMarker: draft.continuationMarker.trim() || undefined,
+    markUnresolved: draft.markUnresolved,
     capturedAt: new Date().toISOString(),
   };
 
