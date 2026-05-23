@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/cn";
 import { captureOverlayMotion } from "@/lib/motion/capture-transitions";
@@ -18,6 +19,10 @@ interface CaptureOptionsProps {
   onRemoveTag: (tag: string) => void;
 }
 
+function SectionLabel({ children }: { children: ReactNode }) {
+  return <p className="type-label text-text-muted">{children}</p>;
+}
+
 export function CaptureOptions({
   draft,
   onUpdate,
@@ -27,31 +32,25 @@ export function CaptureOptions({
   onRemoveTag,
 }: CaptureOptionsProps) {
   return (
-    <motion.div
-      className="space-y-7 pt-1"
-      {...captureOverlayMotion.whisper}
-    >
+    <motion.div className="space-y-7" {...captureOverlayMotion.whisper}>
       <div className="space-y-2.5">
-        <p className="type-label">Continuation</p>
+        <SectionLabel>Continuation</SectionLabel>
         <input
           type="text"
           value={draft.continuationMarker}
           onChange={(e) => onUpdate({ continuationMarker: e.target.value })}
-          placeholder="Thread, session, or line of thought this extends…"
+          placeholder="A thread, session, or line of thought this extends…"
           className={cn(
             "capture-whisper-field w-full bg-transparent py-2.5",
             "text-[var(--text-sm)] leading-relaxed text-text-secondary",
-            "placeholder:text-text-muted",
-            "transition-[border-color] duration-[var(--duration-normal)]"
+            "placeholder:text-text-muted"
           )}
           aria-label="Continuation marker"
         />
       </div>
 
-      <div className="cognitive-divider opacity-60" aria-hidden />
-
       <div className="space-y-3">
-        <p className="type-label">Semantic echoes</p>
+        <SectionLabel>Semantic echoes</SectionLabel>
         <AnimatePresence mode="popLayout">
           {draft.semanticTags.length > 0 && (
             <motion.div
@@ -66,7 +65,7 @@ export function CaptureOptions({
                   key={tag}
                   type="button"
                   onClick={() => onRemoveTag(tag)}
-                  className="rounded-full border border-border-subtle/70 bg-accent-primary-muted/30 px-2.5 py-0.5 text-[11px] text-accent-primary/85 transition-colors duration-[var(--duration-fast)] hover:bg-accent-primary-muted/50"
+                  className="rounded-full bg-accent-primary-muted/25 px-2.5 py-0.5 text-[11px] text-accent-primary/80 transition-colors duration-[var(--duration-fast)] hover:bg-accent-primary-muted/40"
                   aria-label={`Remove echo ${tag}`}
                 >
                   {tag}
@@ -90,19 +89,16 @@ export function CaptureOptions({
           className={cn(
             "capture-whisper-field w-full bg-transparent py-2.5",
             "text-[var(--text-sm)] text-text-secondary",
-            "placeholder:text-text-muted",
-            "transition-[border-color] duration-[var(--duration-normal)]"
+            "placeholder:text-text-muted"
           )}
           aria-label="Semantic echo"
         />
       </div>
 
-      <div className="cognitive-divider opacity-60" aria-hidden />
-
       <div className="space-y-3">
-        <p className="type-label">Emotional tone</p>
+        <SectionLabel>Emotional tone</SectionLabel>
         <div
-          className="flex flex-wrap gap-2"
+          className="capture-tone-field flex flex-wrap gap-x-3 gap-y-2"
           role="group"
           aria-label="Emotional tone"
         >
@@ -118,10 +114,8 @@ export function CaptureOptions({
                   })
                 }
                 className={cn(
-                  "rounded-full px-3 py-1 text-[11px] transition-all duration-[var(--duration-normal)]",
-                  selected
-                    ? "bg-accent-calm-muted text-accent-calm ring-1 ring-accent-calm/20"
-                    : "text-text-tertiary ring-1 ring-transparent hover:bg-white/[0.03] hover:text-text-secondary"
+                  "capture-tone-option rounded-full px-2.5 py-1 text-[11px] text-text-tertiary",
+                  selected && "bg-accent-calm-muted/35"
                 )}
                 aria-pressed={selected}
               >
@@ -132,9 +126,7 @@ export function CaptureOptions({
         </div>
       </div>
 
-      <div className="cognitive-divider opacity-60" aria-hidden />
-
-      <label className="flex cursor-pointer items-start gap-3 py-0.5">
+      <label className="flex cursor-pointer items-center gap-3 py-0.5">
         <input
           type="checkbox"
           checked={draft.markUnresolved}
@@ -143,24 +135,19 @@ export function CaptureOptions({
         />
         <span
           className={cn(
-            "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border transition-all duration-[var(--duration-normal)]",
+            "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-all duration-[var(--duration-normal)]",
             draft.markUnresolved
-              ? "border-accent-warm/40 bg-accent-warm-muted/50"
-              : "border-border-default bg-bg-overlay/40"
+              ? "border-accent-warm/40 bg-accent-warm-muted/45"
+              : "border-border-default/80 bg-bg-overlay/30"
           )}
           aria-hidden
         >
           {draft.markUnresolved && (
-            <span className="h-1.5 w-1.5 rounded-sm bg-accent-warm/80" />
+            <span className="h-1.5 w-1.5 rounded-full bg-accent-warm/75" />
           )}
         </span>
-        <span>
-          <span className="type-label block normal-case tracking-normal text-text-tertiary">
-            Open loop
-          </span>
-          <span className="mt-1 block text-[var(--text-xs)] leading-relaxed text-text-muted">
-            Leave gently unfinished in continuity
-          </span>
+        <span className="text-[var(--text-xs)] text-text-muted">
+          Leave gently unfinished
         </span>
       </label>
     </motion.div>

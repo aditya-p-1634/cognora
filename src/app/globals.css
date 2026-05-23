@@ -247,95 +247,185 @@
 
   .capture-overlay-backdrop {
     background:
-      radial-gradient(ellipse 100% 70% at 50% 36%, rgb(139 159 216 / 8%), transparent 55%),
+      radial-gradient(ellipse 110% 80% at 50% 40%, rgb(139 159 216 / 7%), transparent 58%),
+      radial-gradient(ellipse 60% 50% at 20% 70%, rgb(114 168 164 / 5%), transparent 52%),
       linear-gradient(
         180deg,
-        rgb(8 9 11 / 52%) 0%,
-        rgb(8 9 11 / 64%) 50%,
-        rgb(8 9 11 / 72%) 100%
+        rgb(8 9 11 / 44%) 0%,
+        rgb(8 9 11 / 54%) 50%,
+        rgb(8 9 11 / 60%) 100%
       );
-    backdrop-filter: blur(16px) saturate(1.06);
+    backdrop-filter: blur(14px) saturate(1.05);
   }
 
   .capture-overlay-backdrop-deep {
-    background: rgb(8 9 11 / 22%);
-    backdrop-filter: blur(24px) saturate(1.08);
+    background: rgb(8 9 11 / 14%);
+    backdrop-filter: blur(22px) saturate(1.06);
     mask-image: radial-gradient(
-      ellipse 92% 80% at 50% 44%,
-      black 35%,
-      transparent 78%
+      ellipse 95% 85% at 50% 44%,
+      black 28%,
+      transparent 80%
     );
   }
 
   .capture-fog-edge {
     background: radial-gradient(
-      ellipse 95% 82% at 50% 42%,
-      transparent 50%,
-      rgb(8 9 11 / 22%) 82%,
-      rgb(8 9 11 / 38%) 100%
+      ellipse 98% 88% at 50% 44%,
+      transparent 55%,
+      rgb(8 9 11 / 12%) 88%,
+      rgb(8 9 11 / 22%) 100%
     );
   }
 
   .capture-fog-lift {
     background: radial-gradient(
-      ellipse 70% 50% at 50% 30%,
+      ellipse 80% 55% at 50% 32%,
       var(--color-ambient-accent),
-      transparent 70%
+      transparent 72%
     );
-    opacity: 0.55;
+    opacity: 0.38;
+    animation: capture-fog-drift 14s var(--ease-calm) infinite;
   }
 
-  .capture-focus-region {
-    background: linear-gradient(
-      180deg,
-      rgb(15 17 21 / 72%) 0%,
-      rgb(12 14 18 / 58%) 100%
+  .capture-cognition-glow {
+    background:
+      radial-gradient(ellipse 55% 45% at 50% 38%, rgb(139 159 216 / 7%), transparent 68%),
+      radial-gradient(ellipse 40% 35% at 72% 62%, rgb(114 168 164 / 5%), transparent 70%);
+    animation: capture-cognition-drift 18s var(--ease-calm) infinite;
+  }
+
+  @keyframes capture-fog-drift {
+    0%,
+    100% {
+      opacity: 0.32;
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      opacity: 0.48;
+      transform: translateY(-6px) scale(1.02);
+    }
+  }
+
+  @keyframes capture-cognition-drift {
+    0%,
+    100% {
+      opacity: 0.35;
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      opacity: 0.55;
+      transform: translate(2%, -1%) scale(1.03);
+    }
+  }
+
+  .capture-pause-shell {
+    background: transparent;
+  }
+
+  .capture-gravity-zone {
+    background: radial-gradient(
+      ellipse 95% 88% at 50% 45%,
+      rgb(18 22 30 / 50%) 0%,
+      rgb(12 14 18 / 22%) 52%,
+      transparent 100%
     );
-    box-shadow:
-      0 0 0 1px rgb(255 255 255 / 5%),
-      0 24px 80px rgb(0 0 0 / 28%);
   }
 
-  .capture-thinking-surface {
-    background: rgb(24 28 36 / 45%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
-  }
-
-  .capture-thinking-surface:focus-within {
-    background: rgb(24 28 36 / 58%);
+  .capture-thinking-hold {
+    background: rgb(20 24 32 / 42%);
+    border-radius: var(--radius-xl);
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 5%),
-      0 0 0 1px rgb(139 159 216 / 14%),
-      0 0 40px rgb(139 159 216 / 6%);
+      0 0 0 1px rgb(255 255 255 / 5%);
+  }
+
+  .capture-thinking-hold:focus-within {
+    background: rgb(22 26 34 / 52%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 6%),
+      0 0 0 1px rgb(139 159 216 / 12%),
+      0 0 56px rgb(139 159 216 / 6%);
+  }
+
+  .capture-optional-hold {
+    background: rgb(14 17 22 / 36%);
+    border-radius: var(--radius-lg);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 4%),
+      0 0 0 1px rgb(255 255 255 / 3%);
   }
 
   .capture-thinking-field {
-    caret-color: rgb(139 159 216 / 70%);
+    caret-color: rgb(139 159 216 / 58%);
   }
 
   .capture-thinking-field::placeholder {
     color: var(--color-text-tertiary);
-    opacity: 0.85;
+    opacity: 0.78;
     font-style: italic;
     font-weight: 400;
+    transition: opacity 0.4s var(--ease-calm);
+  }
+
+  .capture-thinking-field:focus::placeholder {
+    opacity: 0.5;
+  }
+
+  .capture-scroll-fade-top {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin-bottom: -1.25rem;
+    height: 1.25rem;
+    background: linear-gradient(180deg, rgb(14 16 21 / 92%), transparent);
+    pointer-events: none;
+  }
+
+  .capture-scroll-fade-bottom {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: -1.5rem;
+    height: 1.5rem;
+    background: linear-gradient(0deg, rgb(14 16 21 / 78%), transparent);
+    pointer-events: none;
   }
 
   .capture-thinking-field:focus {
     outline: none;
   }
 
-  .capture-optional-region {
-    background: rgb(15 17 21 / 40%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
-  }
-
   .capture-whisper-field {
-    border-bottom: 1px solid rgb(255 255 255 / 7%);
+    border-bottom: 1px solid rgb(255 255 255 / 5%);
+    transition: border-color 0.4s var(--ease-calm);
   }
 
+  .capture-whisper-field:hover,
   .capture-whisper-field:focus {
-    border-bottom-color: rgb(139 159 216 / 22%);
+    border-bottom-color: rgb(139 159 216 / 16%);
     outline: none;
+  }
+
+  .capture-tone-field .capture-tone-option {
+    opacity: 0.48;
+    transition:
+      opacity 0.4s var(--ease-calm),
+      color 0.4s var(--ease-calm);
+  }
+
+  .capture-tone-field:hover .capture-tone-option,
+  .capture-tone-field:focus-within .capture-tone-option {
+    opacity: 0.68;
+  }
+
+  .capture-tone-field .capture-tone-option:hover,
+  .capture-tone-field .capture-tone-option:focus-visible {
+    opacity: 0.92;
+  }
+
+  .capture-tone-field .capture-tone-option[aria-pressed="true"] {
+    opacity: 0.9;
+    color: var(--color-accent-calm);
   }
 
   .capture-scroll-region {
@@ -364,10 +454,11 @@
   .capture-footer-anchor {
     background: linear-gradient(
       180deg,
-      rgb(15 17 21 / 0%) 0%,
-      rgb(15 17 21 / 88%) 28%,
-      rgb(12 14 18 / 96%) 100%
+      rgb(8 9 11 / 0%) 0%,
+      rgb(8 9 11 / 55%) 35%,
+      rgb(8 9 11 / 72%) 100%
     );
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(8px);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
   }
 }

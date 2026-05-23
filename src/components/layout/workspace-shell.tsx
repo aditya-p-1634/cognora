@@ -27,7 +27,7 @@ export function WorkspaceShell() {
         )}
         aria-hidden
       >
-        <div className="absolute inset-0 bg-bg-base/18" />
+        <div className="absolute inset-0 bg-bg-base/16" />
       </div>
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute left-[20%] top-0 h-[480px] w-[min(720px,70vw)] -translate-x-1/4 rounded-full bg-accent-primary-muted blur-[100px] opacity-50" />

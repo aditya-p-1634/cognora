@@ -11,7 +11,6 @@ import { useCapture } from "@/providers/workspace-provider";
 import { CaptureThoughtInput } from "./capture-thought-input";
 import { CaptureOptions } from "./capture-options";
 
-/** Viewport-safe max height — tuned for 1366×768 at 100% zoom. */
 const CAPTURE_PANEL_MAX_HEIGHT = "min(90dvh, calc(100dvh - 1.5rem))";
 
 export function CaptureOverlay() {
@@ -88,11 +87,6 @@ export function CaptureOverlay() {
   }, [isCaptureOpen]);
 
   const canPreserve = captureDraft.thought.trim().length > 0;
-  const hasOptionalHints =
-    captureDraft.continuationMarker.trim().length > 0 ||
-    captureDraft.semanticTags.length > 0 ||
-    captureDraft.emotionalTone !== null ||
-    captureDraft.markUnresolved;
 
   if (!mounted) return null;
 
@@ -134,35 +128,41 @@ export function CaptureOverlay() {
             aria-modal="true"
             aria-labelledby="capture-heading"
             className={cn(
-              "capture-focus-region relative z-[1] flex w-full max-w-[40rem] min-h-0 flex-col",
-              "rounded-[var(--radius-2xl)] overflow-hidden"
+              "capture-pause-shell capture-gravity-zone relative z-[1] flex w-full max-w-[40rem] min-h-0 flex-col",
+              "overflow-hidden rounded-[var(--radius-2xl)]"
             )}
             style={{ maxHeight: CAPTURE_PANEL_MAX_HEIGHT }}
             onClick={(e) => e.stopPropagation()}
             {...captureOverlayMotion.focus}
           >
             <div
+              className="capture-cognition-glow pointer-events-none absolute inset-0"
+              aria-hidden
+            />
+
+            <div
               className={cn(
-                "capture-scroll-region min-h-0 flex-1 overflow-y-auto overscroll-contain",
-                "px-6 py-6 sm:px-8 sm:py-7"
+                "capture-scroll-region relative min-h-0 flex-1 overflow-y-auto overscroll-contain",
+                "px-6 py-7 sm:px-8 sm:py-8"
               )}
             >
+              <div className="capture-scroll-fade-top" aria-hidden />
               <motion.header
-                className="mb-6 sm:mb-7"
+                className="mb-8 sm:mb-9"
                 {...captureOverlayMotion.header}
               >
-                <p className="type-label text-accent-primary/75">
-                  Cognitive capture
+                <p className="type-label text-accent-primary/70">
+                  Cognitive pause
                 </p>
                 <h2
                   id="capture-heading"
-                  className="mt-2 text-balance text-[var(--text-xl)] font-medium tracking-[var(--tracking-tight)] text-text-primary"
+                  className="mt-2 text-[var(--text-lg)] font-medium tracking-[var(--tracking-tight)] text-text-primary/95"
                 >
-                  Preserve before it fades
+                  Hold what is forming
                 </h2>
-                <p className="mt-2 max-w-md type-prose text-text-tertiary">
-                  The workspace remains beneath — this is a quiet space to hold a
-                  thought before it slips away.
+                <p className="mt-2 max-w-md text-[var(--text-sm)] leading-relaxed text-text-tertiary">
+                  The workspace remains beneath — stabilize the thought here
+                  before it drifts.
                 </p>
               </motion.header>
 
@@ -171,28 +171,20 @@ export function CaptureOverlay() {
                 onChange={(thought) => updateCaptureDraft({ thought })}
               />
 
-              <div
-                className={cn(
-                  "capture-optional-region mt-6 rounded-[var(--radius-xl)]",
-                  "ring-1 ring-border-subtle/70"
-                )}
-              >
+              <div className="capture-optional-hold mt-8">
                 <button
                   type="button"
                   onClick={() => setOptionsOpen((o) => !o)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left sm:px-5 sm:py-4",
-                    "transition-colors duration-[var(--duration-fast)]",
-                    "hover:bg-white/[0.02]"
+                    "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left sm:px-5",
+                    "transition-colors duration-[var(--duration-normal)] hover:bg-white/[0.02]"
                   )}
                   aria-expanded={optionsOpen}
                 >
                   <div>
                     <p className="type-label">Optional threads</p>
                     <p className="mt-1.5 text-[var(--text-xs)] leading-relaxed text-text-muted">
-                      {optionsOpen
-                        ? "Continuation, echoes, tone — none required"
-                        : "Continuation · semantic echoes · tone · open loop"}
+                      Continuation · echoes · tone · open loop
                     </p>
                   </div>
                   <ChevronDown
@@ -214,7 +206,7 @@ export function CaptureOverlay() {
                         height: "auto",
                         transition: {
                           height: {
-                            duration: design.motion.spatial,
+                            duration: design.motion.linger,
                             ease: design.motion.calm,
                           },
                           opacity: {
@@ -237,9 +229,9 @@ export function CaptureOverlay() {
                           },
                         },
                       }}
-                      className="overflow-hidden border-t border-border-subtle/60"
+                      className="overflow-hidden border-t border-border-subtle/40"
                     >
-                      <div className="px-4 pb-4 pt-1 sm:px-5 sm:pb-5">
+                      <div className="px-4 pb-5 pt-4 sm:px-5 sm:pb-6">
                         <CaptureOptions
                           draft={captureDraft}
                           onUpdate={updateCaptureDraft}
@@ -252,21 +244,13 @@ export function CaptureOverlay() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {!optionsOpen && hasOptionalHints && (
-                  <p className="border-t border-border-subtle/50 px-5 py-2.5 text-[10px] text-accent-calm/80">
-                    Optional details added
-                  </p>
-                )}
               </div>
+
+              <div className="capture-scroll-fade-bottom" aria-hidden />
             </div>
 
             <motion.footer
-              className={cn(
-                "capture-footer-anchor shrink-0",
-                "border-t border-border-subtle/60",
-                "px-6 py-4 sm:px-8 sm:py-5"
-              )}
+              className="capture-footer-anchor shrink-0 px-6 py-4 sm:px-8 sm:py-5"
               {...captureOverlayMotion.actions}
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -278,7 +262,7 @@ export function CaptureOverlay() {
                   <button
                     type="button"
                     onClick={closeCapture}
-                    className="rounded-[var(--radius-lg)] px-4 py-2 text-[var(--text-sm)] text-text-secondary transition-colors duration-[var(--duration-fast)] hover:bg-white/[0.04] hover:text-text-primary"
+                    className="rounded-[var(--radius-lg)] px-4 py-2 text-[var(--text-sm)] text-text-secondary transition-colors duration-[var(--duration-normal)] hover:bg-white/[0.04] hover:text-text-primary"
                   >
                     Release
                   </button>
@@ -289,11 +273,11 @@ export function CaptureOverlay() {
                     className={cn(
                       "rounded-[var(--radius-lg)] px-5 py-2 text-[var(--text-sm)] font-medium transition-all duration-[var(--duration-normal)]",
                       canPreserve
-                        ? "border border-accent-primary/30 bg-accent-primary-muted/45 text-accent-primary hover:border-accent-primary/45 hover:bg-accent-primary-muted/65"
-                        : "cursor-not-allowed border border-border-subtle/60 bg-bg-overlay/30 text-text-muted"
+                        ? "border border-accent-primary/25 bg-accent-primary-muted/35 text-accent-primary hover:border-accent-primary/35 hover:bg-accent-primary-muted/50"
+                        : "cursor-not-allowed border border-border-subtle/50 bg-bg-overlay/25 text-text-muted"
                     )}
                   >
-                    Preserve thought
+                    Preserve
                   </button>
                 </div>
               </div>
