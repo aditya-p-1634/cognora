@@ -9,8 +9,8 @@ import { FeedSection } from "./feed-section";
 import { ThoughtThreadRow } from "./thought-thread-row";
 import { ContinuitySuggestions } from "./continuity-suggestions";
 import { ContinuitySpine } from "./continuity-spine";
-import { mockSuggestions, mockThreads } from "@/data/mock/workspace";
-import { useThreadSelection } from "@/providers/workspace-provider";
+import { mockSuggestions } from "@/data/mock/workspace";
+import { useFeedThreads, useThreadSelection, useCapture } from "@/providers/workspace-provider";
 
 const sectionMotion = {
   initial: { opacity: 0, y: 10 },
@@ -23,12 +23,14 @@ function ThreadList({
   hasThreadSelection,
   onSelect,
   primaryFirst,
+  recentlyCapturedId,
 }: {
-  threads: typeof mockThreads;
+  threads: ReturnType<typeof useFeedThreads>;
   selectedThreadId: string | null;
   hasThreadSelection: boolean;
   onSelect: (id: string) => void;
   primaryFirst?: boolean;
+  recentlyCapturedId: string | null;
 }) {
   return (
     <>
@@ -45,6 +47,7 @@ function ThreadList({
             onSelect={() => onSelect(thread.id)}
             prominence={primaryFirst && i === 0 ? "primary" : "default"}
             isLast={i === threads.length - 1}
+            isEmerging={recentlyCapturedId === thread.id}
           />
         );
       })}
@@ -54,11 +57,13 @@ function ThreadList({
 
 export function ContinuityFeed() {
   const { selectedThreadId, hasThreadSelection, toggleThread } = useThreadSelection();
+  const { recentlyCapturedId } = useCapture();
+  const allThreads = useFeedThreads();
 
-  const focus = mockThreads.filter((t) => t.status === "focus");
-  const active = mockThreads.filter((t) => t.status === "active");
-  const unresolved = mockThreads.filter((t) => t.status === "unresolved");
-  const resurfaced = mockThreads.filter((t) => t.status === "resurfaced");
+  const focus = allThreads.filter((t) => t.status === "focus");
+  const active = allThreads.filter((t) => t.status === "active");
+  const unresolved = allThreads.filter((t) => t.status === "unresolved");
+  const resurfaced = allThreads.filter((t) => t.status === "resurfaced");
 
   return (
     <div
@@ -102,6 +107,7 @@ export function ContinuityFeed() {
                   hasThreadSelection={hasThreadSelection}
                   onSelect={toggleThread}
                   primaryFirst
+                  recentlyCapturedId={recentlyCapturedId}
                 />
               </FeedSection>
             </motion.div>
@@ -116,6 +122,7 @@ export function ContinuityFeed() {
                   selectedThreadId={selectedThreadId}
                   hasThreadSelection={hasThreadSelection}
                   onSelect={toggleThread}
+                  recentlyCapturedId={recentlyCapturedId}
                 />
               </FeedSection>
             </motion.div>
@@ -130,6 +137,7 @@ export function ContinuityFeed() {
                   selectedThreadId={selectedThreadId}
                   hasThreadSelection={hasThreadSelection}
                   onSelect={toggleThread}
+                  recentlyCapturedId={recentlyCapturedId}
                 />
               </FeedSection>
             </motion.div>
@@ -144,6 +152,7 @@ export function ContinuityFeed() {
                   selectedThreadId={selectedThreadId}
                   hasThreadSelection={hasThreadSelection}
                   onSelect={toggleThread}
+                  recentlyCapturedId={recentlyCapturedId}
                 />
               </FeedSection>
             </motion.div>

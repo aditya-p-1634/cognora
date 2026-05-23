@@ -8,15 +8,27 @@ import { WorkspaceSidebar } from "@/components/workspace/sidebar/workspace-sideb
 import { WorkspaceTopbar } from "@/components/workspace/topbar/workspace-topbar";
 import { ContinuityFeed } from "@/components/workspace/continuity-feed/continuity-feed";
 import { ContextPanel } from "@/components/workspace/context-panel/context-panel";
+import { CaptureOverlay } from "@/components/workspace/capture";
+import { useCapture } from "@/providers/workspace-provider";
 
 /** Below topbar — used for sticky side panels with independent scroll. */
 const workspacePanelHeight = "calc(100dvh - var(--height-topbar))";
 
 export function WorkspaceShell() {
   const sidebar = useSidebar();
+  const { isCaptureOpen } = useCapture();
 
   return (
     <div className="workspace-ambient relative flex min-h-dvh w-full flex-col">
+      <div
+        className={cn(
+          "pointer-events-none fixed inset-0 z-[20] transition-opacity duration-[var(--duration-linger)] ease-[var(--ease-calm)]",
+          isCaptureOpen ? "opacity-100" : "opacity-0"
+        )}
+        aria-hidden
+      >
+        <div className="absolute inset-0 bg-bg-base/18" />
+      </div>
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute left-[20%] top-0 h-[480px] w-[min(720px,70vw)] -translate-x-1/4 rounded-full bg-accent-primary-muted blur-[100px] opacity-50" />
         <div className="absolute right-[10%] top-1/3 h-[320px] w-[400px] rounded-full bg-accent-calm-muted blur-[90px] opacity-40" />
@@ -83,6 +95,8 @@ export function WorkspaceShell() {
           />
         </motion.main>
       </div>
+
+      <CaptureOverlay />
     </div>
   );
 }

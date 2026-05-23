@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 import { design } from "@/config/design";
+import { captureThreadEmergence } from "@/lib/motion/capture-transitions";
 import {
   presenceOpacity,
   resolveThreadPresence,
@@ -19,6 +20,7 @@ interface ThoughtThreadRowProps {
   onSelect: () => void;
   prominence?: "primary" | "default";
   isLast?: boolean;
+  isEmerging?: boolean;
 }
 
 function underlyingPresence(
@@ -45,6 +47,7 @@ export function ThoughtThreadRow({
   onSelect,
   prominence = "default",
   isLast = false,
+  isEmerging = false,
 }: ThoughtThreadRowProps) {
   const isPrimary = prominence === "primary";
   const presence = resolveThreadPresence(thread, { selected, dimmed });
@@ -52,7 +55,10 @@ export function ThoughtThreadRow({
   const targetOpacity = presenceOpacity(presence, underlying);
 
   return (
-    <li className={cn("relative", !isLast && "pb-1")}>
+    <motion.li
+      className={cn("relative", !isLast && "pb-1")}
+      {...(isEmerging ? captureThreadEmergence : { initial: false })}
+    >
       <motion.button
         type="button"
         onClick={onSelect}
@@ -206,6 +212,6 @@ export function ThoughtThreadRow({
           </div>
         </motion.div>
       </motion.button>
-    </li>
+    </motion.li>
   );
 }

@@ -244,4 +244,130 @@
   .continuity-drift {
     animation: continuity-drift 6s var(--ease-calm) infinite;
   }
+
+  .capture-overlay-backdrop {
+    background:
+      radial-gradient(ellipse 100% 70% at 50% 36%, rgb(139 159 216 / 8%), transparent 55%),
+      linear-gradient(
+        180deg,
+        rgb(8 9 11 / 52%) 0%,
+        rgb(8 9 11 / 64%) 50%,
+        rgb(8 9 11 / 72%) 100%
+      );
+    backdrop-filter: blur(16px) saturate(1.06);
+  }
+
+  .capture-overlay-backdrop-deep {
+    background: rgb(8 9 11 / 22%);
+    backdrop-filter: blur(24px) saturate(1.08);
+    mask-image: radial-gradient(
+      ellipse 92% 80% at 50% 44%,
+      black 35%,
+      transparent 78%
+    );
+  }
+
+  .capture-fog-edge {
+    background: radial-gradient(
+      ellipse 95% 82% at 50% 42%,
+      transparent 50%,
+      rgb(8 9 11 / 22%) 82%,
+      rgb(8 9 11 / 38%) 100%
+    );
+  }
+
+  .capture-fog-lift {
+    background: radial-gradient(
+      ellipse 70% 50% at 50% 30%,
+      var(--color-ambient-accent),
+      transparent 70%
+    );
+    opacity: 0.55;
+  }
+
+  .capture-focus-region {
+    background: linear-gradient(
+      180deg,
+      rgb(15 17 21 / 72%) 0%,
+      rgb(12 14 18 / 58%) 100%
+    );
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 5%),
+      0 24px 80px rgb(0 0 0 / 28%);
+  }
+
+  .capture-thinking-surface {
+    background: rgb(24 28 36 / 45%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+  }
+
+  .capture-thinking-surface:focus-within {
+    background: rgb(24 28 36 / 58%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 5%),
+      0 0 0 1px rgb(139 159 216 / 14%),
+      0 0 40px rgb(139 159 216 / 6%);
+  }
+
+  .capture-thinking-field {
+    caret-color: rgb(139 159 216 / 70%);
+  }
+
+  .capture-thinking-field::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 0.85;
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .capture-thinking-field:focus {
+    outline: none;
+  }
+
+  .capture-optional-region {
+    background: rgb(15 17 21 / 40%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+  }
+
+  .capture-whisper-field {
+    border-bottom: 1px solid rgb(255 255 255 / 7%);
+  }
+
+  .capture-whisper-field:focus {
+    border-bottom-color: rgb(139 159 216 / 22%);
+    outline: none;
+  }
+
+  .capture-scroll-region {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 12%) transparent;
+    scroll-behavior: smooth;
+  }
+
+  .capture-scroll-region::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .capture-scroll-region::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .capture-scroll-region::-webkit-scrollbar-thumb {
+    background: rgb(255 255 255 / 10%);
+    border-radius: 999px;
+  }
+
+  .capture-scroll-region::-webkit-scrollbar-thumb:hover {
+    background: rgb(255 255 255 / 16%);
+  }
+
+  .capture-footer-anchor {
+    background: linear-gradient(
+      180deg,
+      rgb(15 17 21 / 0%) 0%,
+      rgb(15 17 21 / 88%) 28%,
+      rgb(12 14 18 / 96%) 100%
+    );
+    backdrop-filter: blur(10px);
+  }
 }

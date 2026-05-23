@@ -15,6 +15,7 @@ export const design = {
     linger: 0.42,
   },
   zIndex: {
+    captureOverlay: 60,
     sidebarMobile: 50,
     contextMobile: 45,
     backdrop: 40,

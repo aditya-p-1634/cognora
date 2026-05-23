@@ -1,3 +1,5 @@
+import type { CapturedThoughtMeta } from "@/types/capture";
+
 export type ThoughtThreadStatus = "active" | "unresolved" | "resurfaced" | "focus";
 
 export interface ThoughtThread {
@@ -8,6 +10,8 @@ export interface ThoughtThread {
   lastTouched: string;
   momentum?: "high" | "medium" | "low";
   projectLabel?: string;
+  /** Present for thoughts preserved through the capture overlay. */
+  captured?: CapturedThoughtMeta;
 }
 
 export interface ContinuitySuggestion {

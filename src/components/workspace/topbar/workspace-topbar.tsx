@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { IconButton } from "@/components/ui/icon-button";
 import { design } from "@/config/design";
 import { mockSession } from "@/data/mock/workspace";
+import { useCapture } from "@/providers/workspace-provider";
 import { SessionPill } from "./session-pill";
 
 interface WorkspaceTopbarProps {
@@ -15,6 +16,7 @@ interface WorkspaceTopbarProps {
 }
 
 export function WorkspaceTopbar({ onMenuToggle, showMenuButton }: WorkspaceTopbarProps) {
+  const { openCapture } = useCapture();
   return (
     <motion.header
       initial={{ opacity: 0, y: -4 }}
@@ -55,6 +57,7 @@ export function WorkspaceTopbar({ onMenuToggle, showMenuButton }: WorkspaceTopba
           variant="capture"
           size="sm"
           className="h-9 gap-1.5 rounded-[var(--radius-lg)] px-3.5 shadow-soft"
+          onClick={openCapture}
         >
           <Plus className="h-3.5 w-3.5" strokeWidth={2} />
           <span className="hidden sm:inline">Capture</span>

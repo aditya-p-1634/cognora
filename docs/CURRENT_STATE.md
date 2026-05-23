@@ -50,11 +50,18 @@
 - [x] Utility nav: Search, Settings
 - [x] Nav highlights `activeNav` in provider (UI state only)
 - [x] Session indicator in sidebar footer area (`SidebarWorkspaceFooter`)
-- [x] Topbar: semantic search input (non-functional), session pill, status text, Capture button (non-functional), profile placeholder
+- [x] Topbar: semantic search input (non-functional), session pill, status text, Capture button (opens cognitive capture overlay), profile placeholder
+
+### Cognitive capture
+
+- [x] Ambient capture overlay — blur backdrop, atmospheric panel, ESC / click-outside dismiss
+- [x] `CaptureDraft` state — thought, continuation, semantic tags, emotional tone, unresolved toggle
+- [x] Preserve flow — builds `ThoughtThread` + `ThoughtContext`, prepends to feed with emergence motion
+- [x] `useCapture` hook — open/close, draft updates, captured thread list
 
 ### State & data
 
-- [x] `WorkspaceProvider` — `activeNav`, `selectedThreadId`, derived `selectedThread` + `context`
+- [x] `WorkspaceProvider` — `activeNav`, `selectedThreadId`, derived `selectedThread` + `context`, capture state
 - [x] `useSidebar` — breakpoint-aware collapse and mobile drawer
 - [x] Mock data: 4 threads, 2 suggestions, 1 session, per-thread context map
 - [x] Domain types in `src/types/workspace.ts`
@@ -77,7 +84,7 @@
 | Authentication | None |
 | Real navigation routes | All nav items link to `/workspace`; switching nav id does not change view |
 | Global search | Input + ⌘K hint only |
-| Capture flow | Button present, no handler |
+| Capture flow | Implemented — ambient overlay, draft state, mock thread insertion |
 | Suggestion actions | Buttons present, no handlers |
 | Light theme | Dark only |
 | Tests | None in repo |
@@ -130,7 +137,7 @@ Derived from mock `unresolvedContinuations`, in-code comments, and architectural
 1. **Motion vocabulary documentation in code** — patterns exist (`design.motion`, `layoutId`); formalize shared variants/helpers if motion grows.
 2. **Wire navigation** — distinct routes or views per `NavItemId`; stop using placeholder `href: "/workspace"` for all items.
 3. **URL state for selection** — `?thread=` (or similar) so refresh and share preserve context.
-4. **Command surfaces** — implement ⌘K search and Capture as modal/command palette stubs.
+4. **Command surfaces** — implement ⌘K search palette stub (Capture overlay shipped).
 
 ### Medium term — continuity core
 
