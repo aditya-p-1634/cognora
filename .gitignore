@@ -1,6 +1,15 @@
 node_modules
 .next
 out
-.env*.local
+dist
+build
+coverage
+
+.env
+.env.local
+.env.*
+
+*.log
 *.tsbuildinfo
-next-env.d.ts
+
+.DS_Store
