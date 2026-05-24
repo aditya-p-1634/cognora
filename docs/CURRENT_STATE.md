@@ -66,6 +66,13 @@
 - [x] Mock data: 4 threads, 2 suggestions, 1 session, per-thread context map
 - [x] Domain types in `src/types/workspace.ts`
 
+### Memory gravity engine
+
+- [x] `src/lib/gravity/` — continuity gravity scoring, temporal decay, continuity hubs, resurfacing order
+- [x] `gravityLedger` — persisted selection/session reinforcement (optional on continuity snapshot)
+- [x] Latent pull for unresolved thoughts; gravity-informed relationships, whispers, feed ordering
+- [x] Subtle feed presence (opacity, spine tone) — no visible scores or gamification
+
 ### Relationship intelligence engine
 
 - [x] `src/lib/relationships/` — deterministic scoring, semantic profiles, related-thought detection

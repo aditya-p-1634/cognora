@@ -35,13 +35,18 @@ export function analyzeThemeClusters(
 export function collectLatentEchoes(
   threads: ThoughtThread[],
   contextByThreadId: Record<string, ThoughtContext>,
-  limit = 5
+  limit = 5,
+  gravityWeights?: Map<string, number>
 ): string[] {
   const profiles = threads.map((thread) =>
     extractThoughtProfile(thread, contextByThreadId[thread.id])
   );
   const recurring = computeRecurringConceptWeights(profiles);
-  const latentWeights = computeLatentContinuityWeights(threads, contextByThreadId);
+  const latentWeights = computeLatentContinuityWeights(
+    threads,
+    contextByThreadId,
+    gravityWeights
+  );
   const scores = new Map<string, number>();
 
   const bump = (

@@ -21,6 +21,7 @@ interface ThoughtThreadRowProps {
   prominence?: "primary" | "default";
   isLast?: boolean;
   isEmerging?: boolean;
+  gravityWeight?: number;
 }
 
 function underlyingPresence(
@@ -48,11 +49,13 @@ export function ThoughtThreadRow({
   prominence = "default",
   isLast = false,
   isEmerging = false,
+  gravityWeight = 0,
 }: ThoughtThreadRowProps) {
   const isPrimary = prominence === "primary";
   const presence = resolveThreadPresence(thread, { selected, dimmed });
   const underlying = underlyingPresence(thread);
-  const targetOpacity = presenceOpacity(presence, underlying);
+  const targetOpacity = presenceOpacity(presence, underlying, gravityWeight);
+  const gravityLinger = !selected && gravityWeight >= 0.42;
 
   return (
     <motion.li
@@ -96,11 +99,13 @@ export function ThoughtThreadRow({
               ? "bg-accent-primary continuity-spine-node-glow ring-[5px] ring-accent-primary/25"
               : presence === "dormant"
                 ? "bg-border-default/80"
-                : presence === "resurfaced"
+                : presence === "resurfaced" || gravityLinger
                   ? "bg-accent-calm/55"
                   : presence === "unresolved"
                     ? "bg-accent-warm/45"
-                    : "bg-border-strong transition-all duration-[var(--duration-normal)] group-hover:bg-accent-primary/60 group-hover:ring-2 group-hover:ring-accent-primary/10"
+                    : gravityWeight >= 0.38
+                      ? "bg-accent-primary/40"
+                      : "bg-border-strong transition-all duration-[var(--duration-normal)] group-hover:bg-accent-primary/60 group-hover:ring-2 group-hover:ring-accent-primary/10"
           )}
           aria-hidden
           animate={

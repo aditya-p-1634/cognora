@@ -6,14 +6,16 @@ import type {
 
 /** Primary entry — computes contextual relationships for the selected thought. */
 export function computeThreadRelationships(
-  input: RelationshipEngineInput
+  input: RelationshipEngineInput,
+  gravityWeights?: Map<string, number>
 ): ThreadRelationshipSnapshot | null {
   const { focusThreadId, threads, contextByThreadId } = input;
 
   const field = buildRelationshipField(
     focusThreadId,
     threads,
-    contextByThreadId
+    contextByThreadId,
+    gravityWeights
   );
   if (!field) return null;
 

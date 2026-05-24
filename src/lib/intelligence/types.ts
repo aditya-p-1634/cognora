@@ -26,6 +26,8 @@ export interface ContinuityIntelligenceInput {
   sessionStartedAt: string;
   lastSavedAt: string | null;
   capturedCount: number;
+  gravityWeights?: Map<string, number>;
+  resurfacingOrder?: string[];
 }
 
 export interface ContinuityIntelligence {

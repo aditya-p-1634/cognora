@@ -9,10 +9,12 @@ import { FeedSection } from "./feed-section";
 import { ThoughtThreadRow } from "./thought-thread-row";
 import { ContinuitySuggestions } from "./continuity-suggestions";
 import { ContinuitySpine } from "./continuity-spine";
+import { sortThreadsByGravity } from "@/lib/gravity";
 import {
   useCapture,
   useContinuityIntelligence,
   useFeedThreads,
+  useMemoryGravity,
   useThreadSelection,
 } from "@/providers/workspace-provider";
 
@@ -28,6 +30,7 @@ function ThreadList({
   onSelect,
   primaryFirst,
   recentlyCapturedId,
+  gravityWeights,
 }: {
   threads: ReturnType<typeof useFeedThreads>;
   selectedThreadId: string | null;
@@ -35,6 +38,7 @@ function ThreadList({
   onSelect: (id: string) => void;
   primaryFirst?: boolean;
   recentlyCapturedId: string | null;
+  gravityWeights: Map<string, number>;
 }) {
   return (
     <>
@@ -52,6 +56,7 @@ function ThreadList({
             prominence={primaryFirst && i === 0 ? "primary" : "default"}
             isLast={i === threads.length - 1}
             isEmerging={recentlyCapturedId === thread.id}
+            gravityWeight={gravityWeights.get(thread.id) ?? 0}
           />
         );
       })}
@@ -63,12 +68,22 @@ export function ContinuityFeed() {
   const { selectedThreadId, hasThreadSelection, toggleThread } = useThreadSelection();
   const { recentlyCapturedId } = useCapture();
   const { suggestions } = useContinuityIntelligence();
+  const { weights } = useMemoryGravity();
   const allThreads = useFeedThreads();
 
   const focus = allThreads.filter((t) => t.status === "focus");
-  const active = allThreads.filter((t) => t.status === "active");
-  const unresolved = allThreads.filter((t) => t.status === "unresolved");
-  const resurfaced = allThreads.filter((t) => t.status === "resurfaced");
+  const active = sortThreadsByGravity(
+    allThreads.filter((t) => t.status === "active"),
+    weights
+  );
+  const unresolved = sortThreadsByGravity(
+    allThreads.filter((t) => t.status === "unresolved"),
+    weights
+  );
+  const resurfaced = sortThreadsByGravity(
+    allThreads.filter((t) => t.status === "resurfaced"),
+    weights
+  );
 
   return (
     <div
@@ -113,6 +128,7 @@ export function ContinuityFeed() {
                   onSelect={toggleThread}
                   primaryFirst
                   recentlyCapturedId={recentlyCapturedId}
+                  gravityWeights={weights}
                 />
               </FeedSection>
             </motion.div>
@@ -128,6 +144,7 @@ export function ContinuityFeed() {
                   hasThreadSelection={hasThreadSelection}
                   onSelect={toggleThread}
                   recentlyCapturedId={recentlyCapturedId}
+                  gravityWeights={weights}
                 />
               </FeedSection>
             </motion.div>
@@ -143,6 +160,7 @@ export function ContinuityFeed() {
                   hasThreadSelection={hasThreadSelection}
                   onSelect={toggleThread}
                   recentlyCapturedId={recentlyCapturedId}
+                  gravityWeights={weights}
                 />
               </FeedSection>
             </motion.div>
@@ -158,6 +176,7 @@ export function ContinuityFeed() {
                   hasThreadSelection={hasThreadSelection}
                   onSelect={toggleThread}
                   recentlyCapturedId={recentlyCapturedId}
+                  gravityWeights={weights}
                 />
               </FeedSection>
             </motion.div>

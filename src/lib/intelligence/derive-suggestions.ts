@@ -1,3 +1,4 @@
+import { pickHighestGravityThread } from "@/lib/gravity";
 import type { ContinuitySuggestion, ThoughtThread } from "@/types/workspace";
 import type { ThemeCluster } from "@/lib/intelligence/types";
 
@@ -15,15 +16,35 @@ function sessionIdleMinutes(sessionStartedAt: string, now = Date.now()): number 
   return Math.max(0, Math.floor((now - started) / (60 * 1000)));
 }
 
+function pickThread(
+  pool: ThoughtThread[],
+  gravityWeights?: Map<string, number>
+): ThoughtThread | undefined {
+  if (pool.length === 0) return undefined;
+  if (gravityWeights && gravityWeights.size > 0) {
+    return pickHighestGravityThread(pool, gravityWeights);
+  }
+  return pool[0];
+}
+
 export function deriveContinuitySuggestions(input: {
   threads: ThoughtThread[];
   themeClusters: ThemeCluster[];
   selectedThreadId: string | null;
   sessionStartedAt: string;
   capturedCount: number;
+  gravityWeights?: Map<string, number>;
+  resurfacingOrder?: string[];
 }): ContinuitySuggestion[] {
-  const { threads, themeClusters, selectedThreadId, sessionStartedAt, capturedCount } =
-    input;
+  const {
+    threads,
+    themeClusters,
+    selectedThreadId,
+    sessionStartedAt,
+    capturedCount,
+    gravityWeights,
+    resurfacingOrder,
+  } = input;
 
   const suggestions: ContinuitySuggestion[] = [];
 
@@ -35,17 +56,19 @@ export function deriveContinuitySuggestions(input: {
     const top = themeClusters.slice(0, 2);
     const themes = top.map((c) => c.theme);
     const threadIds = [...new Set(top.flatMap((c) => c.threadIds))];
+    const clusterThreads = threads.filter((t) => threadIds.includes(t.id));
+    const anchor = pickThread(clusterThreads, gravityWeights) ?? threads[0];
 
     suggestions.push({
       id: "intel-shared-themes",
       message: `${threadIds.length} threads share themes around ${formatThemeList(themes)} — context may deepen when connected.`,
       actionLabel: "Review themes",
-      action: { type: "select-thread", threadId: threadIds[0] },
+      action: { type: "select-thread", threadId: anchor.id },
     });
   }
 
   if (unresolved.length > 0) {
-    const target = unresolved[0];
+    const target = pickThread(unresolved, gravityWeights)!;
     suggestions.push({
       id: "intel-unresolved-loop",
       message:
@@ -58,7 +81,13 @@ export function deriveContinuitySuggestions(input: {
   }
 
   if (resurfaced.length > 0 && suggestions.length < MAX_SUGGESTIONS) {
-    const target = resurfaced[0];
+    const resurfacingPool =
+      resurfacingOrder && resurfacingOrder.length > 0
+        ? resurfacingOrder
+            .map((id) => resurfaced.find((t) => t.id === id))
+            .filter((t): t is ThoughtThread => Boolean(t))
+        : resurfaced;
+    const target = pickThread(resurfacingPool, gravityWeights)!;
     suggestions.push({
       id: "intel-resurfaced",
       message: `"${target.title}" resurfaced from prior thinking — momentum may return with a gentle revisit.`,
@@ -82,7 +111,13 @@ export function deriveContinuitySuggestions(input: {
     threads.length > 0 &&
     suggestions.length < MAX_SUGGESTIONS
   ) {
-    const anchor = focus ?? threads[0];
+    const highGravity = gravityWeights
+      ? pickHighestGravityThread(
+          threads.filter((t) => t.status !== "focus"),
+          gravityWeights
+        )
+      : undefined;
+    const anchor = focus ?? highGravity ?? threads[0];
     suggestions.push({
       id: "intel-latent-context",
       message:
@@ -93,6 +128,8 @@ export function deriveContinuitySuggestions(input: {
   }
 
   if (capturedCount > 0 && suggestions.length < MAX_SUGGESTIONS) {
+    const captured = threads.filter((t) => t.id.startsWith("cap-"));
+    const target = pickThread(captured, gravityWeights);
     suggestions.push({
       id: "intel-captured-memory",
       message:
@@ -101,11 +138,8 @@ export function deriveContinuitySuggestions(input: {
           : `${capturedCount} preserved thoughts are weaving into your continuity field.`,
       actionLabel: capturedCount === 1 ? "View capture" : undefined,
       action:
-        capturedCount === 1
-          ? {
-              type: "select-thread",
-              threadId: threads.find((t) => t.id.startsWith("cap-"))?.id ?? threads[0].id,
-            }
+        capturedCount === 1 && target
+          ? { type: "select-thread", threadId: target.id }
           : undefined,
     });
   }

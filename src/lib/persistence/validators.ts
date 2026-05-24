@@ -5,6 +5,7 @@ import {
   normalizeThoughtContext,
   normalizeThoughtThread,
 } from "@/lib/persistence/normalize";
+import { normalizeGravityLedger } from "@/lib/gravity";
 import {
   WORKSPACE_PERSISTENCE_VERSION,
   type PersistedCognitiveThought,
@@ -55,6 +56,7 @@ function baseWorkspaceFields(
     selectedThreadId:
       typeof raw.selectedThreadId === "string" ? raw.selectedThreadId : null,
     thoughts,
+    gravityLedger: normalizeGravityLedger(raw.gravityLedger),
   };
 }
 

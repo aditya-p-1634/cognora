@@ -13,8 +13,15 @@ import type {
 export function computeContinuityIntelligence(
   input: ContinuityIntelligenceInput
 ): ContinuityIntelligence {
-  const { threads, contextByThreadId, selectedThreadId, sessionStartedAt, capturedCount } =
-    input;
+  const {
+    threads,
+    contextByThreadId,
+    selectedThreadId,
+    sessionStartedAt,
+    capturedCount,
+    gravityWeights,
+    resurfacingOrder,
+  } = input;
 
   const themeClusters = analyzeThemeClusters(threads, contextByThreadId);
 
@@ -24,9 +31,11 @@ export function computeContinuityIntelligence(
     selectedThreadId,
     sessionStartedAt,
     capturedCount,
+    gravityWeights,
+    resurfacingOrder,
   });
 
-  const echoes = collectLatentEchoes(threads, contextByThreadId);
+  const echoes = collectLatentEchoes(threads, contextByThreadId, 5, gravityWeights);
   const latentEchoes =
     echoes.length > 0 ? echoes : [...mockLatentHints];
 

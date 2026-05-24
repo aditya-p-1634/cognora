@@ -7,7 +7,8 @@ import { extractProfilesForThreads } from "@/lib/relationships/semantic/extract-
  */
 export function computeLatentContinuityWeights(
   threads: ThoughtThread[],
-  contextByThreadId: Record<string, ThoughtContext>
+  contextByThreadId: Record<string, ThoughtContext>,
+  gravityWeights?: Map<string, number>
 ): Map<string, number> {
   const profiles = extractProfilesForThreads(threads, contextByThreadId);
   const weights = new Map<string, number>();
@@ -21,7 +22,10 @@ export function computeLatentContinuityWeights(
     if (profile.status === "resurfaced") weight += 0.06;
     if (thread.captured) weight += 0.04;
 
-    if (weight > 0) weights.set(thread.id, Math.min(weight, 0.2));
+    const gravity = gravityWeights?.get(thread.id) ?? 0;
+    weight += gravity * 0.14;
+
+    if (weight > 0) weights.set(thread.id, Math.min(weight, 0.24));
   }
 
   return weights;

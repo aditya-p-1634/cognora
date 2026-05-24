@@ -25,6 +25,13 @@ import {
   type ContinuityIntelligence,
 } from "@/lib/intelligence";
 import {
+  computeGravityField,
+  reinforceSelection,
+  touchSessionForThreads,
+  type ContinuityGravityField,
+} from "@/lib/gravity";
+import type { GravityLedger } from "@/types/gravity";
+import {
   computeThreadRelationships,
   type ThreadRelationshipSnapshot,
 } from "@/lib/relationships";
@@ -60,6 +67,7 @@ interface WorkspaceState {
   isContinuityHydrated: boolean;
   continuityIntelligence: ContinuityIntelligence;
   threadRelationships: ThreadRelationshipSnapshot | null;
+  memoryGravity: ContinuityGravityField;
 }
 
 interface WorkspaceActions {
@@ -109,7 +117,8 @@ function buildPersistencePayload(
   sessionStartedAt: string,
   sessionLabel: string,
   activeNav: NavItemId,
-  selectedThreadId: string | null
+  selectedThreadId: string | null,
+  gravityLedger: GravityLedger
 ) {
   return {
     thoughts,
@@ -117,6 +126,7 @@ function buildPersistencePayload(
     sessionLabel,
     activeNav,
     selectedThreadId,
+    gravityLedger,
   };
 }
 
@@ -138,6 +148,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [hasPersistedContinuity, setHasPersistedContinuity] = useState(false);
+  const [gravityLedger, setGravityLedger] = useState<GravityLedger>({});
 
   const {
     isHydrated: isContinuityHydrated,
@@ -181,6 +192,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     [feedThreads, captureContextMap]
   );
 
+  const memoryGravity = useMemo(
+    () =>
+      computeGravityField({
+        threads: feedThreads,
+        contextByThreadId: intelligenceContexts,
+        ledger: gravityLedger,
+      }),
+    [feedThreads, intelligenceContexts, gravityLedger]
+  );
+
   const continuityIntelligence = useMemo(
     () =>
       computeContinuityIntelligence({
@@ -190,6 +211,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         sessionStartedAt,
         lastSavedAt,
         capturedCount: persistedThoughts.length,
+        gravityWeights: memoryGravity.weights,
+        resurfacingOrder: memoryGravity.resurfacingOrder,
       }),
     [
       feedThreads,
@@ -198,17 +221,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       sessionStartedAt,
       lastSavedAt,
       persistedThoughts.length,
+      memoryGravity.weights,
+      memoryGravity.resurfacingOrder,
     ]
   );
 
   const threadRelationships = useMemo(() => {
     if (!selectedThreadId) return null;
-    return computeThreadRelationships({
-      focusThreadId: selectedThreadId,
-      threads: feedThreads,
-      contextByThreadId: intelligenceContexts,
-    });
-  }, [selectedThreadId, feedThreads, intelligenceContexts]);
+    return computeThreadRelationships(
+      {
+        focusThreadId: selectedThreadId,
+        threads: feedThreads,
+        contextByThreadId: intelligenceContexts,
+      },
+      memoryGravity.weights
+    );
+  }, [selectedThreadId, feedThreads, intelligenceContexts, memoryGravity.weights]);
 
   const continuitySession = useMemo((): ActiveSession & { continuityDepth: number } => {
     const continuityDepth = computeContinuityDepth({
@@ -245,7 +273,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         sessionStartedAt,
         sessionLabel,
         activeNav,
-        selectedThreadId
+        selectedThreadId,
+        gravityLedger
       );
 
       if (options?.immediate) {
@@ -261,6 +290,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       sessionLabel,
       activeNav,
       selectedThreadId,
+      gravityLedger,
       persistNow,
       scheduleSave,
     ]
@@ -282,6 +312,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setSessionStartedAt(snapshot.sessionStartedAt);
       setLastSavedAt(snapshot.savedAt);
       setHasPersistedContinuity(thoughts.length > 0);
+      const mergedThreads = mergeFeedThreads(
+        thoughtsToFeedDerivatives(thoughts).capturedThreads
+      );
+      const ledger = touchSessionForThreads(
+        snapshot.gravityLedger ?? {},
+        mergedThreads.map((t) => t.id),
+        new Map(mergedThreads.map((t) => [t.id, t])),
+        Date.now()
+      );
+      setGravityLedger(ledger);
 
       persistNow(
         buildPersistencePayload(
@@ -292,7 +332,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           resolvePersistedSelection(
             snapshot.selectedThreadId,
             thoughtsToFeedDerivatives(thoughts).capturedThreads
-          )
+          ),
+          ledger
         )
       );
     }
@@ -310,6 +351,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     selectedThreadId,
     sessionStartedAt,
     sessionLabel,
+    gravityLedger,
     syncPersistence,
   ]);
 
@@ -336,13 +378,36 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [recentlyCapturedId]);
 
-  const selectThread = useCallback((id: string | null) => {
-    setSelectedThreadId(id);
-  }, []);
+  const selectThread = useCallback(
+    (id: string | null) => {
+      setSelectedThreadId(id);
+      if (!id) return;
 
-  const toggleThread = useCallback((id: string) => {
-    setSelectedThreadId((prev) => (prev === id ? null : id));
-  }, []);
+      const thread =
+        capturedThreads.find((t) => t.id === id) ?? getThreadById(id);
+      setGravityLedger((prev) =>
+        reinforceSelection(prev, id, thread, Date.now())
+      );
+    },
+    [capturedThreads]
+  );
+
+  const toggleThread = useCallback(
+    (id: string) => {
+      setSelectedThreadId((prev) => {
+        const next = prev === id ? null : id;
+        if (next) {
+          const thread =
+            capturedThreads.find((t) => t.id === next) ?? getThreadById(next);
+          setGravityLedger((ledger) =>
+            reinforceSelection(ledger, next, thread, Date.now())
+          );
+        }
+        return next;
+      });
+    },
+    [capturedThreads]
+  );
 
   const openCapture = useCallback(() => {
     setCaptureDraft(EMPTY_CAPTURE_DRAFT);
@@ -372,6 +437,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setCaptureDraft(EMPTY_CAPTURE_DRAFT);
     setHasPersistedContinuity(true);
 
+    setGravityLedger((prev) =>
+      reinforceSelection(prev, id, record.thread, Date.now())
+    );
+
     syncPersistence(nextThoughts, { immediate: true });
   }, [captureDraft, persistedThoughts, syncPersistence]);
 
@@ -392,6 +461,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       isContinuityHydrated,
       continuityIntelligence,
       threadRelationships,
+      memoryGravity,
       setActiveNav,
       selectThread,
       toggleThread,
@@ -416,6 +486,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       isContinuityHydrated,
       continuityIntelligence,
       threadRelationships,
+      memoryGravity,
       selectThread,
       toggleThread,
       openCapture,
@@ -505,4 +576,14 @@ export function useContinuityIntelligence() {
 export function useThreadRelationships() {
   const { threadRelationships } = useWorkspace();
   return threadRelationships;
+}
+
+export function useMemoryGravity() {
+  const { memoryGravity } = useWorkspace();
+  return memoryGravity;
+}
+
+export function useThreadGravityWeight(threadId: string): number {
+  const { memoryGravity } = useWorkspace();
+  return memoryGravity.weights.get(threadId) ?? 0;
 }

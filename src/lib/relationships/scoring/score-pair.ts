@@ -28,6 +28,7 @@ export function scoreRelationshipPair(
   options?: {
     recurringWeights?: Map<string, number>;
     latentWeight?: number;
+    gravityWeight?: number;
   }
 ): {
   totalScore: number;
@@ -36,7 +37,9 @@ export function scoreRelationshipPair(
   sharedTokens: string[];
 } {
   const recurring = options?.recurringWeights ?? new Map();
-  const latentMultiplier = 1 + (options?.latentWeight ?? 0);
+  const latentPull = options?.latentWeight ?? 0;
+  const gravityPull = (options?.gravityWeight ?? 0) * 0.2;
+  const latentMultiplier = 1 + latentPull + gravityPull;
 
   const sharedThemes = intersectSorted(focus.themes, candidate.themes);
   const sharedTags = intersectSorted(focus.tags, candidate.tags);

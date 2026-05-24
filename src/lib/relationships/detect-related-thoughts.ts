@@ -24,6 +24,7 @@ export function scoreAllRelationships(
   options?: {
     recurringWeights?: Map<string, number>;
     latentWeights?: Map<string, number>;
+    gravityWeights?: Map<string, number>;
   }
 ): ScoredThreadRelationship[] {
   const scored: ScoredThreadRelationship[] = [];
@@ -35,6 +36,7 @@ export function scoreAllRelationships(
       scoreRelationshipPair(focus, candidate, {
         recurringWeights: options?.recurringWeights,
         latentWeight: options?.latentWeights?.get(threadId),
+        gravityWeight: options?.gravityWeights?.get(threadId),
       });
 
     if (totalScore < RELATIONSHIP_THRESHOLDS.minDisplayScore) continue;
@@ -93,7 +95,8 @@ export function detectRelatedThoughts(
 export function buildRelationshipField(
   focusThreadId: string,
   threads: ThoughtThread[],
-  contextByThreadId: Record<string, ThoughtContext>
+  contextByThreadId: Record<string, ThoughtContext>,
+  gravityWeights?: Map<string, number>
 ) {
   const profiles = extractProfilesForThreads(threads, contextByThreadId);
   const focus = profiles.get(focusThreadId);
@@ -105,6 +108,7 @@ export function buildRelationshipField(
   const scored = scoreAllRelationships(focus, profiles, {
     recurringWeights,
     latentWeights,
+    gravityWeights,
   });
 
   const relatedThoughts = detectRelatedThoughts(

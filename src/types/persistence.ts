@@ -1,5 +1,6 @@
 import type { NavItemId } from "@/config/navigation";
 import type { EmotionalTone } from "@/types/capture";
+import type { GravityLedger } from "@/types/gravity";
 import type { ThoughtContext, ThoughtThread } from "@/types/workspace";
 
 /** Storage schema version — bump when shape changes; migrate on read. */
@@ -32,6 +33,8 @@ export interface WorkspacePersistenceState {
   activeNav: NavItemId;
   selectedThreadId: string | null;
   thoughts: PersistedCognitiveThought[];
+  /** Selection and reinforcement history for memory gravity. */
+  gravityLedger?: GravityLedger;
 }
 
 /** Payload for save — version and savedAt are applied by the store. */
@@ -39,3 +42,5 @@ export type WorkspacePersistencePayload = Omit<
   WorkspacePersistenceState,
   "version" | "savedAt"
 >;
+
+export type { GravityLedger, ThreadContinuitySignals } from "@/types/gravity";

@@ -99,6 +99,8 @@ Keep motion timing aligned: tokens use `--duration-*` and `--ease-*`; `design.mo
 
 **Relationship intelligence (client):** `src/lib/relationships/` scores deterministic thought-to-thought continuity (shared tags/themes, continuation lineage, unresolved resonance, tone overlap, language patterns). `computeThreadRelationships()` runs when a thread is selected; UI reads via `useThreadRelationships()`. Semantic normalization lives in `relationships/semantic/` and is shared with the intelligence layer.
 
+**Memory gravity (client):** `src/lib/gravity/` computes latent cognitive weight per thought (unresolved pull, resurfacing, selection reinforcement, semantic hubs, temporal decay). `gravityLedger` in local persistence tracks selection/session signals. `computeGravityField()` in `WorkspaceProvider` feeds relationships, intelligence, and subtle feed presence via `useMemoryGravity()` — scores are never rendered.
+
 **Not yet present:** URL-synced selection, server state, global stores (Zustand/Redux), React Query, or optimistic updates.
 
 ### Component organization
@@ -117,7 +119,7 @@ src/
 ├── config/                 # navigation.ts, design.ts
 ├── data/mock/              # workspace mock data + context map
 ├── hooks/                  # use-sidebar, use-media-query
-├── lib/                    # cn(), continuity, persistence, intelligence, relationships
+├── lib/                    # cn(), continuity, persistence, intelligence, relationships, gravity
 ├── providers/              # workspace-provider.tsx
 ├── styles/                 # tokens.css
 └── types/                  # workspace domain types

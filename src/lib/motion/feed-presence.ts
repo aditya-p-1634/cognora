@@ -56,9 +56,17 @@ export const presenceDormantOpacity: Record<
 
 export function presenceOpacity(
   presence: ThreadSemanticPresence,
-  underlying: Exclude<ThreadSemanticPresence, "magnetic" | "dormant">
+  underlying: Exclude<ThreadSemanticPresence, "magnetic" | "dormant">,
+  gravityWeight = 0
 ): number {
   if (presence === "magnetic") return 1;
-  if (presence === "dormant") return presenceDormantOpacity[underlying];
-  return presenceRestOpacity[presence];
+  const base =
+    presence === "dormant"
+      ? presenceDormantOpacity[underlying]
+      : presenceRestOpacity[presence];
+
+  if (presence === "dormant" || gravityWeight <= 0) return base;
+
+  const pull = Math.min(0.05, gravityWeight * 0.07);
+  return Math.min(1, base + pull);
 }
