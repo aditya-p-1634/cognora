@@ -21,6 +21,7 @@ export function computeContinuityIntelligence(
     capturedCount,
     gravityWeights,
     resurfacingOrder,
+    cognitionSignals,
   } = input;
 
   const themeClusters = analyzeThemeClusters(threads, contextByThreadId);
@@ -35,7 +36,13 @@ export function computeContinuityIntelligence(
     resurfacingOrder,
   });
 
-  const echoes = collectLatentEchoes(threads, contextByThreadId, 5, gravityWeights);
+  const echoes = collectLatentEchoes(
+    threads,
+    contextByThreadId,
+    5,
+    gravityWeights,
+    cognitionSignals
+  );
   const latentEchoes =
     echoes.length > 0 ? echoes : [...mockLatentHints];
 

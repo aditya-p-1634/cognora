@@ -73,6 +73,13 @@
 - [x] Latent pull for unresolved thoughts; gravity-informed relationships, whispers, feed ordering
 - [x] Subtle feed presence (opacity, spine tone) — no visible scores or gamification
 
+### Semantic integrity layer
+
+- [x] `src/lib/integrity/` — cognition signal scoring, relationship confidence, gravity modulation
+- [x] Filters weak phrase-overlap adjacency; prefers thematic and unresolved coherence
+- [x] Effective gravity + refined resurfacing order (no scores in UI)
+- [x] Low-signal thoughts remain visible but exert weaker continuity pull
+
 ### Relationship intelligence engine
 
 - [x] `src/lib/relationships/` — deterministic scoring, semantic profiles, related-thought detection

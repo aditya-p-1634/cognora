@@ -15,6 +15,7 @@ import {
   useContinuityIntelligence,
   useFeedThreads,
   useMemoryGravity,
+  useSemanticIntegrity,
   useThreadSelection,
 } from "@/providers/workspace-provider";
 
@@ -31,6 +32,7 @@ function ThreadList({
   primaryFirst,
   recentlyCapturedId,
   gravityWeights,
+  cognitionSignals,
 }: {
   threads: ReturnType<typeof useFeedThreads>;
   selectedThreadId: string | null;
@@ -39,6 +41,7 @@ function ThreadList({
   primaryFirst?: boolean;
   recentlyCapturedId: string | null;
   gravityWeights: Map<string, number>;
+  cognitionSignals: Map<string, { signal: number }>;
 }) {
   return (
     <>
@@ -56,7 +59,10 @@ function ThreadList({
             prominence={primaryFirst && i === 0 ? "primary" : "default"}
             isLast={i === threads.length - 1}
             isEmerging={recentlyCapturedId === thread.id}
-            gravityWeight={gravityWeights.get(thread.id) ?? 0}
+            gravityWeight={
+              (gravityWeights.get(thread.id) ?? 0) *
+              (0.5 + 0.5 * (cognitionSignals.get(thread.id)?.signal ?? 0.4))
+            }
           />
         );
       })}
@@ -69,6 +75,7 @@ export function ContinuityFeed() {
   const { recentlyCapturedId } = useCapture();
   const { suggestions } = useContinuityIntelligence();
   const { weights } = useMemoryGravity();
+  const { signals: cognitionSignals } = useSemanticIntegrity();
   const allThreads = useFeedThreads();
 
   const focus = allThreads.filter((t) => t.status === "focus");
@@ -129,6 +136,7 @@ export function ContinuityFeed() {
                   primaryFirst
                   recentlyCapturedId={recentlyCapturedId}
                   gravityWeights={weights}
+                  cognitionSignals={cognitionSignals}
                 />
               </FeedSection>
             </motion.div>
@@ -145,6 +153,7 @@ export function ContinuityFeed() {
                   onSelect={toggleThread}
                   recentlyCapturedId={recentlyCapturedId}
                   gravityWeights={weights}
+                  cognitionSignals={cognitionSignals}
                 />
               </FeedSection>
             </motion.div>
@@ -161,6 +170,7 @@ export function ContinuityFeed() {
                   onSelect={toggleThread}
                   recentlyCapturedId={recentlyCapturedId}
                   gravityWeights={weights}
+                  cognitionSignals={cognitionSignals}
                 />
               </FeedSection>
             </motion.div>
@@ -177,6 +187,7 @@ export function ContinuityFeed() {
                   onSelect={toggleThread}
                   recentlyCapturedId={recentlyCapturedId}
                   gravityWeights={weights}
+                  cognitionSignals={cognitionSignals}
                 />
               </FeedSection>
             </motion.div>

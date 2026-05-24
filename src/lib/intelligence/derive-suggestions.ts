@@ -35,6 +35,7 @@ export function deriveContinuitySuggestions(input: {
   capturedCount: number;
   gravityWeights?: Map<string, number>;
   resurfacingOrder?: string[];
+  cognitionSignals?: Map<string, { signal: number }>;
 }): ContinuitySuggestion[] {
   const {
     threads,
@@ -44,12 +45,22 @@ export function deriveContinuitySuggestions(input: {
     capturedCount,
     gravityWeights,
     resurfacingOrder,
+    cognitionSignals,
   } = input;
+
+  const poolWithSignal = (pool: ThoughtThread[]) =>
+    cognitionSignals
+      ? pool.filter((t) => (cognitionSignals.get(t.id)?.signal ?? 0) >= 0.34)
+      : pool;
 
   const suggestions: ContinuitySuggestion[] = [];
 
-  const unresolved = threads.filter((t) => t.status === "unresolved");
-  const resurfaced = threads.filter((t) => t.status === "resurfaced");
+  const unresolved = poolWithSignal(
+    threads.filter((t) => t.status === "unresolved")
+  );
+  const resurfaced = poolWithSignal(
+    threads.filter((t) => t.status === "resurfaced")
+  );
   const focus = threads.find((t) => t.status === "focus");
 
   if (themeClusters.length > 0) {

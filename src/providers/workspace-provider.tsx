@@ -30,6 +30,10 @@ import {
   touchSessionForThreads,
   type ContinuityGravityField,
 } from "@/lib/gravity";
+import {
+  computeSemanticIntegrityField,
+  type SemanticIntegrityField,
+} from "@/lib/integrity";
 import type { GravityLedger } from "@/types/gravity";
 import {
   computeThreadRelationships,
@@ -68,6 +72,7 @@ interface WorkspaceState {
   continuityIntelligence: ContinuityIntelligence;
   threadRelationships: ThreadRelationshipSnapshot | null;
   memoryGravity: ContinuityGravityField;
+  semanticIntegrity: SemanticIntegrityField;
 }
 
 interface WorkspaceActions {
@@ -192,7 +197,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     [feedThreads, captureContextMap]
   );
 
-  const memoryGravity = useMemo(
+  const rawMemoryGravity = useMemo(
     () =>
       computeGravityField({
         threads: feedThreads,
@@ -200,6 +205,26 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         ledger: gravityLedger,
       }),
     [feedThreads, intelligenceContexts, gravityLedger]
+  );
+
+  const semanticIntegrity = useMemo(
+    () =>
+      computeSemanticIntegrityField({
+        threads: feedThreads,
+        contextByThreadId: intelligenceContexts,
+        gravityField: rawMemoryGravity,
+        ledger: gravityLedger,
+      }),
+    [feedThreads, intelligenceContexts, rawMemoryGravity, gravityLedger]
+  );
+
+  const memoryGravity = useMemo(
+    (): ContinuityGravityField => ({
+      ...rawMemoryGravity,
+      weights: semanticIntegrity.effectiveGravity,
+      resurfacingOrder: semanticIntegrity.resurfacingOrder,
+    }),
+    [rawMemoryGravity, semanticIntegrity]
   );
 
   const continuityIntelligence = useMemo(
@@ -213,6 +238,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         capturedCount: persistedThoughts.length,
         gravityWeights: memoryGravity.weights,
         resurfacingOrder: memoryGravity.resurfacingOrder,
+        cognitionSignals: semanticIntegrity.signals,
       }),
     [
       feedThreads,
@@ -223,6 +249,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       persistedThoughts.length,
       memoryGravity.weights,
       memoryGravity.resurfacingOrder,
+      semanticIntegrity.signals,
     ]
   );
 
@@ -234,9 +261,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         threads: feedThreads,
         contextByThreadId: intelligenceContexts,
       },
-      memoryGravity.weights
+      {
+        gravityWeights: memoryGravity.weights,
+        cognitionSignals: semanticIntegrity.signals,
+      }
     );
-  }, [selectedThreadId, feedThreads, intelligenceContexts, memoryGravity.weights]);
+  }, [
+    selectedThreadId,
+    feedThreads,
+    intelligenceContexts,
+    memoryGravity.weights,
+    semanticIntegrity.signals,
+  ]);
 
   const continuitySession = useMemo((): ActiveSession & { continuityDepth: number } => {
     const continuityDepth = computeContinuityDepth({
@@ -462,6 +498,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       continuityIntelligence,
       threadRelationships,
       memoryGravity,
+      semanticIntegrity,
       setActiveNav,
       selectThread,
       toggleThread,
@@ -487,6 +524,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       continuityIntelligence,
       threadRelationships,
       memoryGravity,
+      semanticIntegrity,
       selectThread,
       toggleThread,
       openCapture,
@@ -586,4 +624,9 @@ export function useMemoryGravity() {
 export function useThreadGravityWeight(threadId: string): number {
   const { memoryGravity } = useWorkspace();
   return memoryGravity.weights.get(threadId) ?? 0;
+}
+
+export function useSemanticIntegrity() {
+  const { semanticIntegrity } = useWorkspace();
+  return semanticIntegrity;
 }

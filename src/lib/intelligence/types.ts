@@ -28,6 +28,7 @@ export interface ContinuityIntelligenceInput {
   capturedCount: number;
   gravityWeights?: Map<string, number>;
   resurfacingOrder?: string[];
+  cognitionSignals?: Map<string, { signal: number }>;
 }
 
 export interface ContinuityIntelligence {

@@ -1,13 +1,16 @@
 import { buildRelationshipField } from "@/lib/relationships/detect-related-thoughts";
+import type { CognitionSignalProfile } from "@/lib/integrity/types";
 import type {
   RelationshipEngineInput,
   ThreadRelationshipSnapshot,
 } from "@/lib/relationships/types";
 
-/** Primary entry — computes contextual relationships for the selected thought. */
 export function computeThreadRelationships(
   input: RelationshipEngineInput,
-  gravityWeights?: Map<string, number>
+  options?: {
+    gravityWeights?: Map<string, number>;
+    cognitionSignals?: Map<string, CognitionSignalProfile>;
+  }
 ): ThreadRelationshipSnapshot | null {
   const { focusThreadId, threads, contextByThreadId } = input;
 
@@ -15,7 +18,7 @@ export function computeThreadRelationships(
     focusThreadId,
     threads,
     contextByThreadId,
-    gravityWeights
+    options
   );
   if (!field) return null;
 

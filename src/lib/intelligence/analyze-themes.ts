@@ -36,7 +36,8 @@ export function collectLatentEchoes(
   threads: ThoughtThread[],
   contextByThreadId: Record<string, ThoughtContext>,
   limit = 5,
-  gravityWeights?: Map<string, number>
+  gravityWeights?: Map<string, number>,
+  cognitionSignals?: Map<string, { signal: number }>
 ): string[] {
   const profiles = threads.map((thread) =>
     extractThoughtProfile(thread, contextByThreadId[thread.id])
@@ -59,9 +60,11 @@ export function collectLatentEchoes(
     if (!display) return;
     const latentBoost = 1 + (latentWeights.get(threadId) ?? 0);
     const recurringBoost = recurring.has(themeKey) ? 1.4 : 1;
+    const signalBoost = 0.55 + 0.45 * (cognitionSignals?.get(threadId)?.signal ?? 0.4);
     scores.set(
       display,
-      (scores.get(display) ?? 0) + weight * latentBoost * recurringBoost
+      (scores.get(display) ?? 0) +
+        weight * latentBoost * recurringBoost * signalBoost
     );
   };
 

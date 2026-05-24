@@ -1,4 +1,9 @@
 import {
+  applyIntegrityToRelationships,
+  filterResonanceThemes,
+} from "@/lib/integrity";
+import type { CognitionSignalProfile } from "@/lib/integrity/types";
+import {
   affinityFromScore,
   deriveContinuityEcho,
   deriveResonanceHint,
@@ -39,7 +44,7 @@ export function scoreAllRelationships(
         gravityWeight: options?.gravityWeights?.get(threadId),
       });
 
-    if (totalScore < RELATIONSHIP_THRESHOLDS.minDisplayScore) continue;
+    if (totalScore < RELATIONSHIP_THRESHOLDS.minDisplayScore * 0.85) continue;
 
     scored.push({
       threadId,
@@ -96,20 +101,37 @@ export function buildRelationshipField(
   focusThreadId: string,
   threads: ThoughtThread[],
   contextByThreadId: Record<string, ThoughtContext>,
-  gravityWeights?: Map<string, number>
+  options?: {
+    gravityWeights?: Map<string, number>;
+    cognitionSignals?: Map<string, CognitionSignalProfile>;
+  }
 ) {
   const profiles = extractProfilesForThreads(threads, contextByThreadId);
   const focus = profiles.get(focusThreadId);
   if (!focus) return null;
 
   const recurringWeights = computeRecurringConceptWeights(profiles.values());
-  const latentWeights = computeLatentContinuityWeights(threads, contextByThreadId);
+  const latentWeights = computeLatentContinuityWeights(
+    threads,
+    contextByThreadId,
+    options?.gravityWeights
+  );
 
-  const scored = scoreAllRelationships(focus, profiles, {
+  const rawScored = scoreAllRelationships(focus, profiles, {
     recurringWeights,
     latentWeights,
-    gravityWeights,
+    gravityWeights: options?.gravityWeights,
   });
+
+  const scored = options?.cognitionSignals
+    ? applyIntegrityToRelationships(
+        focus,
+        rawScored,
+        profiles,
+        options.cognitionSignals,
+        recurringWeights
+      )
+    : rawScored;
 
   const relatedThoughts = detectRelatedThoughts(
     focus,
@@ -118,17 +140,33 @@ export function buildRelationshipField(
     scored
   );
 
-  const sharedResonance = [
-    ...new Set(
-      scored.flatMap((s) =>
-        s.sharedThemes.map((t) => focus.themeLabels[t] ?? toDisplayLabel(t))
+  const sharedResonance = options?.cognitionSignals
+    ? filterResonanceThemes(
+        scored as ReturnType<typeof applyIntegrityToRelationships>,
+        focus.themeLabels,
+        RELATIONSHIP_THRESHOLDS.maxSharedResonance
       )
-    ),
-  ].slice(0, RELATIONSHIP_THRESHOLDS.maxSharedResonance);
+    : [
+        ...new Set(
+          scored.flatMap((s) =>
+            s.sharedThemes.map((t) => focus.themeLabels[t] ?? toDisplayLabel(t))
+          )
+        ),
+      ].slice(0, RELATIONSHIP_THRESHOLDS.maxSharedResonance);
 
   const continuityEchoes: string[] = [];
   for (const entry of scored) {
     if (continuityEchoes.length >= RELATIONSHIP_THRESHOLDS.maxContinuityEchoes) break;
+
+    const integrityEntry = entry as { confidence?: number };
+    if (
+      options?.cognitionSignals &&
+      integrityEntry.confidence !== undefined &&
+      integrityEntry.confidence < 0.38
+    ) {
+      continue;
+    }
+
     const echo = deriveContinuityEcho(
       focus.themeLabels,
       entry.sharedThemes,
