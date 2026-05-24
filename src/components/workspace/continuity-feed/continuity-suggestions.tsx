@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { design } from "@/config/design";
+import { useCapture, useThreadSelection } from "@/providers/workspace-provider";
 import type { ContinuitySuggestion } from "@/types/workspace";
 
 export function ContinuitySuggestions({
@@ -10,6 +11,25 @@ export function ContinuitySuggestions({
 }: {
   suggestions: ContinuitySuggestion[];
 }) {
+  const { selectThread } = useThreadSelection();
+  const { openCapture } = useCapture();
+
+  if (suggestions.length === 0) return null;
+
+  const handleAction = (suggestion: ContinuitySuggestion) => {
+    const action = suggestion.action;
+    if (!action) return;
+
+    if (action.type === "select-thread") {
+      selectThread(action.threadId);
+      return;
+    }
+
+    if (action.type === "open-capture") {
+      openCapture();
+    }
+  };
+
   return (
     <section className="relative pt-4">
       <div
@@ -62,7 +82,9 @@ export function ContinuitySuggestions({
               {s.actionLabel && (
                 <button
                   type="button"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] px-1 py-0.5 text-[var(--text-xs)] font-medium text-accent-warm/85 transition-all duration-[var(--duration-fast)] group-hover:text-accent-warm"
+                  onClick={() => handleAction(s)}
+                  disabled={!s.action}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] px-1 py-0.5 text-[var(--text-xs)] font-medium text-accent-warm/85 transition-all duration-[var(--duration-fast)] enabled:group-hover:text-accent-warm disabled:cursor-default disabled:opacity-70"
                 >
                   {s.actionLabel}
                   <ArrowRight className="h-3 w-3 transition-transform duration-[var(--duration-fast)] group-hover:translate-x-0.5" />

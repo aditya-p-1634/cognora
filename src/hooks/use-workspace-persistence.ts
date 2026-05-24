@@ -1,10 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  loadWorkspacePersistence,
-  saveWorkspacePersistence,
-} from "@/lib/persistence";
+import { hydrateWorkspaceFromStorage, saveWorkspacePersistence } from "@/lib/persistence";
 import type { WorkspacePersistencePayload } from "@/types/persistence";
 
 const SAVE_DEBOUNCE_MS = 400;
@@ -59,7 +56,8 @@ export function useWorkspacePersistence() {
   }, [isHydrated, flush]);
 
   const hydrate = useCallback(() => {
-    return loadWorkspacePersistence();
+    const result = hydrateWorkspaceFromStorage();
+    return result?.state ?? null;
   }, []);
 
   const completeHydration = useCallback(() => {

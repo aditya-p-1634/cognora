@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -19,8 +20,12 @@ import {
   mergeFeedThreads,
 } from "@/lib/continuity";
 import {
+  computeContinuityIntelligence,
+  resolveIntelligenceContexts,
+  type ContinuityIntelligence,
+} from "@/lib/intelligence";
+import {
   createPersistedThought,
-  hydrateThoughtsForDisplay,
   thoughtsToFeedDerivatives,
   upsertThought,
 } from "@/lib/persistence";
@@ -49,6 +54,7 @@ interface WorkspaceState {
   continuitySession: ActiveSession & { continuityDepth: number };
   hasPersistedContinuity: boolean;
   isContinuityHydrated: boolean;
+  continuityIntelligence: ContinuityIntelligence;
 }
 
 interface WorkspaceActions {
@@ -128,8 +134,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [hasPersistedContinuity, setHasPersistedContinuity] = useState(false);
 
-  const { isHydrated: isContinuityHydrated, hydrate, completeHydration, scheduleSave, persistNow } =
-    useWorkspacePersistence();
+  const {
+    isHydrated: isContinuityHydrated,
+    hydrate,
+    completeHydration,
+    scheduleSave,
+    persistNow,
+  } = useWorkspacePersistence();
+  const persistAfterHydrationRef = useRef(false);
 
   const { capturedThreads, captureContextMap } = useMemo(
     () => thoughtsToFeedDerivatives(persistedThoughts),
@@ -157,6 +169,31 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const feedThreads = useMemo(
     () => mergeFeedThreads(capturedThreads),
     [capturedThreads]
+  );
+
+  const intelligenceContexts = useMemo(
+    () => resolveIntelligenceContexts(feedThreads, captureContextMap),
+    [feedThreads, captureContextMap]
+  );
+
+  const continuityIntelligence = useMemo(
+    () =>
+      computeContinuityIntelligence({
+        threads: feedThreads,
+        contextByThreadId: intelligenceContexts,
+        selectedThreadId,
+        sessionStartedAt,
+        lastSavedAt,
+        capturedCount: persistedThoughts.length,
+      }),
+    [
+      feedThreads,
+      intelligenceContexts,
+      selectedThreadId,
+      sessionStartedAt,
+      lastSavedAt,
+      persistedThoughts.length,
+    ]
   );
 
   const continuitySession = useMemo((): ActiveSession & { continuityDepth: number } => {
@@ -218,7 +255,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const snapshot = hydrate();
     if (snapshot) {
-      const thoughts = hydrateThoughtsForDisplay(snapshot.thoughts);
+      const thoughts = snapshot.thoughts;
       setPersistedThoughts(thoughts);
       setActiveNav(snapshot.activeNav);
       setSelectedThreadId(
@@ -231,12 +268,26 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setSessionStartedAt(snapshot.sessionStartedAt);
       setLastSavedAt(snapshot.savedAt);
       setHasPersistedContinuity(thoughts.length > 0);
+
+      persistNow(
+        buildPersistencePayload(
+          thoughts,
+          snapshot.sessionStartedAt,
+          snapshot.sessionLabel,
+          snapshot.activeNav,
+          resolvePersistedSelection(
+            snapshot.selectedThreadId,
+            thoughtsToFeedDerivatives(thoughts).capturedThreads
+          )
+        )
+      );
     }
+    persistAfterHydrationRef.current = true;
     completeHydration();
-  }, [hydrate, completeHydration]);
+  }, [hydrate, completeHydration, persistNow]);
 
   useEffect(() => {
-    if (!isContinuityHydrated) return;
+    if (!isContinuityHydrated || !persistAfterHydrationRef.current) return;
     syncPersistence(persistedThoughts);
   }, [
     isContinuityHydrated,
@@ -325,6 +376,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       continuitySession,
       hasPersistedContinuity,
       isContinuityHydrated,
+      continuityIntelligence,
       setActiveNav,
       selectThread,
       toggleThread,
@@ -347,6 +399,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       continuitySession,
       hasPersistedContinuity,
       isContinuityHydrated,
+      continuityIntelligence,
       selectThread,
       toggleThread,
       openCapture,
@@ -426,4 +479,9 @@ export function useContinuitySession() {
     useWorkspace();
 
   return { continuitySession, hasPersistedContinuity, isContinuityHydrated };
+}
+
+export function useContinuityIntelligence() {
+  const { continuityIntelligence } = useWorkspace();
+  return continuityIntelligence;
 }

@@ -66,11 +66,20 @@
 - [x] Mock data: 4 threads, 2 suggestions, 1 session, per-thread context map
 - [x] Domain types in `src/types/workspace.ts`
 
+### Continuity intelligence layer
+
+- [x] `src/lib/intelligence/` — theme clustering, whisper derivation, latent echoes, data-driven latent graph
+- [x] `computeContinuityIntelligence()` — analyzes merged threads + contexts (mock + captured)
+- [x] `useContinuityIntelligence()` — whispers, latent echoes, graph snapshot for UI
+- [x] Continuity whispers — state-derived messages with calm actions (select thread)
+- [x] Latent context panel — semantic echoes and graph reflect live workspace signals (mock fallback when empty)
+
 ### Persistent cognitive continuity
 
 - [x] `src/lib/persistence/` — typed localStorage adapter, validators, v1→v2 migration, `PersistedCognitiveThought` records
 - [x] Full thought payload: text, timestamp, tone, unresolved flag, semantic tags, continuation metadata, thread + context projections
 - [x] `useWorkspacePersistence` — hydrate on init, debounced save, **immediate flush on capture**, `pagehide` / `beforeunload` safety
+- [x] Lenient snapshot normalization + empty-save guard (prevents refresh from wiping stored thoughts)
 - [x] Continuity ordering (newest-first); calm rehydration (relative timestamps, no emergence on restore)
 - [x] `computeContinuityDepth` + `continuitySession` across feed strip, topbar, sidebar
 
@@ -93,7 +102,7 @@
 | Real navigation routes | All nav items link to `/workspace`; switching nav id does not change view |
 | Global search | Input + ⌘K hint only |
 | Capture flow | Implemented — ambient overlay, draft state, mock thread insertion |
-| Suggestion actions | Buttons present, no handlers |
+| Suggestion actions | Wired for intelligence-derived whispers (thread selection) |
 | Light theme | Dark only |
 | Tests | None in repo |
 | README | Not present |
@@ -106,7 +115,7 @@
 2. **Select a thread** to highlight it in the feed and load structured context in the right panel.
 3. **Collapse or expand sidebar** on desktop; open/close nav drawer on mobile.
 4. **View session continuity cues** — restored session label, thread count, continuity depth (mock percentage).
-5. **Read continuity whispers** — passive suggestions at the bottom of the feed.
+5. **Read continuity whispers** — observational suggestions derived from themes, unresolved loops, and session signals.
 6. **Experience latent context** when no thread is selected — graph + semantic echoes.
 7. **Resume cognitive state across visits** — captured thoughts, thread selection, and session metadata restore from local storage.
 
@@ -152,8 +161,8 @@ Derived from mock `unresolvedContinuations`, in-code comments, and architectural
 ### Medium term — continuity core
 
 5. **Replace mock data layer** — API or remote store for base threads/context; local snapshot already holds captures + workspace selection (extend as needed).
-6. **Semantic relations** — evolve `ContextRelation` / graph from decorative SVG to data-driven (per mock thread `t2`: “edges without taxonomy”).
-7. **Resurfacing signals** — connect feed status transitions and whispers to real rules or user actions.
+6. **Semantic relations** — [x] latent graph is data-driven from concepts/relationships; refine taxonomy and cross-thread edges when backend exists.
+7. **Resurfacing signals** — [x] whispers surface resurfaced/unresolved threads; extend with explicit status transitions when rules grow.
 8. **Session bridge** — [x] local persist/restore shipped; extend with cross-device sync when backend exists.
 
 ### Longer term — platform

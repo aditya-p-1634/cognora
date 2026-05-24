@@ -95,6 +95,8 @@ Keep motion timing aligned: tokens use `--duration-*` and `--ease-*`; `design.mo
 
 **Persistent continuity (local):** `src/lib/persistence/` owns `localStorage` (`cognora.continuity.v1`, schema v2). Each `PersistedCognitiveThought` stores full capture payload plus feed/context projections. `useWorkspacePersistence` hydrates on mount; debounced save + immediate flush on capture + `pagehide` guard. `WorkspaceProvider` keeps `persistedThoughts` as source of truth; `src/lib/continuity/` supplies depth, merge, and session formatting.
 
+**Continuity intelligence (client):** `src/lib/intelligence/` derives whispers, latent semantic echoes, and a lightweight latent graph from merged feed threads + contexts (mock + persisted). `computeContinuityIntelligence()` runs in `WorkspaceProvider`; UI reads via `useContinuityIntelligence()`.
+
 **Not yet present:** URL-synced selection, server state, global stores (Zustand/Redux), React Query, or optimistic updates.
 
 ### Component organization
@@ -113,7 +115,7 @@ src/
 ├── config/                 # navigation.ts, design.ts
 ├── data/mock/              # workspace mock data + context map
 ├── hooks/                  # use-sidebar, use-media-query
-├── lib/                    # cn()
+├── lib/                    # cn(), continuity, persistence, intelligence
 ├── providers/              # workspace-provider.tsx
 ├── styles/                 # tokens.css
 └── types/                  # workspace domain types

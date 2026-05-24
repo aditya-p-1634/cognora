@@ -9,8 +9,12 @@ import { FeedSection } from "./feed-section";
 import { ThoughtThreadRow } from "./thought-thread-row";
 import { ContinuitySuggestions } from "./continuity-suggestions";
 import { ContinuitySpine } from "./continuity-spine";
-import { mockSuggestions } from "@/data/mock/workspace";
-import { useFeedThreads, useThreadSelection, useCapture } from "@/providers/workspace-provider";
+import {
+  useCapture,
+  useContinuityIntelligence,
+  useFeedThreads,
+  useThreadSelection,
+} from "@/providers/workspace-provider";
 
 const sectionMotion = {
   initial: { opacity: 0, y: 10 },
@@ -58,6 +62,7 @@ function ThreadList({
 export function ContinuityFeed() {
   const { selectedThreadId, hasThreadSelection, toggleThread } = useThreadSelection();
   const { recentlyCapturedId } = useCapture();
+  const { suggestions } = useContinuityIntelligence();
   const allThreads = useFeedThreads();
 
   const focus = allThreads.filter((t) => t.status === "focus");
@@ -161,7 +166,7 @@ export function ContinuityFeed() {
               variants={sectionMotion}
               transition={{ duration: design.motion.normal, ease: design.motion.enter }}
             >
-              <ContinuitySuggestions suggestions={mockSuggestions} />
+              <ContinuitySuggestions suggestions={suggestions} />
             </motion.div>
           </motion.div>
         </div>

@@ -1,3 +1,4 @@
+export { hydrateWorkspaceFromStorage } from "./hydration";
 export {
   canUseLocalStorage,
   readStorageJson,
@@ -5,6 +6,11 @@ export {
   writeStorageJson,
   writeStorageRaw,
 } from "./local-storage";
+export {
+  normalizePersistedThought,
+  normalizeThoughtContext,
+  normalizeThoughtThread,
+} from "./normalize";
 export {
   createPersistedThought,
   hydrateThoughtForDisplay,

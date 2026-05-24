@@ -2,12 +2,14 @@
 
 import { motion } from "framer-motion";
 import { design } from "@/config/design";
-import { mockLatentHints } from "@/data/mock/workspace";
+import { useContinuityIntelligence } from "@/providers/workspace-provider";
 import { ContextLatentGraph } from "./context-latent-graph";
 
 import { contextPanelContent } from "@/lib/motion/context-transitions";
 
 export function ContextEmpty() {
+  const { latentEchoes, latentGraph } = useContinuityIntelligence();
+
   return (
     <motion.div
       {...contextPanelContent}
@@ -31,12 +33,12 @@ export function ContextEmpty() {
         </p>
       </div>
 
-      <ContextLatentGraph />
+      <ContextLatentGraph graph={latentGraph} />
 
       <ul className="relative mt-8 space-y-2" role="list" aria-label="Semantic echoes">
-        {mockLatentHints.map((hint, i) => (
+        {latentEchoes.map((hint, i) => (
           <motion.li
-            key={hint}
+            key={`${hint}-${i}`}
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{

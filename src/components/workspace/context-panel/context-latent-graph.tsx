@@ -1,31 +1,74 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { design } from "@/config/design";
+import type { LatentGraphSnapshot } from "@/lib/intelligence";
 
-const nodes = [
-  { id: "n1", cx: 80, cy: 48, r: 4 },
-  { id: "n2", cx: 140, cy: 72, r: 3 },
-  { id: "n3", cx: 200, cy: 40, r: 5 },
-  { id: "n4", cx: 160, cy: 110, r: 3 },
-  { id: "n5", cx: 100, cy: 100, r: 3 },
-];
+const VIEW_WIDTH = 280;
+const VIEW_HEIGHT = 140;
 
-const edges: [string, string][] = [
-  ["n1", "n2"],
-  ["n2", "n3"],
-  ["n2", "n4"],
-  ["n1", "n5"],
-  ["n5", "n4"],
-  ["n3", "n4"],
-];
+interface LayoutNode {
+  id: string;
+  label: string;
+  cx: number;
+  cy: number;
+  r: number;
+}
 
-const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
+function layoutGraph(snapshot: LatentGraphSnapshot): {
+  nodes: LayoutNode[];
+  edges: { source: string; target: string }[];
+} {
+  const { nodes, edges } = snapshot;
+  if (nodes.length === 0) {
+    return { nodes: [], edges: [] };
+  }
 
-export function ContextLatentGraph() {
+  const cx = VIEW_WIDTH / 2;
+  const cy = VIEW_HEIGHT / 2;
+  const radius = Math.min(VIEW_WIDTH, VIEW_HEIGHT) * 0.34;
+
+  const laidOut = nodes.map((node, i) => {
+    const angle = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
+    return {
+      ...node,
+      cx: cx + Math.cos(angle) * radius,
+      cy: cy + Math.sin(angle) * radius,
+      r: i === 0 ? 5 : 3,
+    };
+  });
+
+  return { nodes: laidOut, edges };
+}
+
+interface ContextLatentGraphProps {
+  graph: LatentGraphSnapshot;
+}
+
+export function ContextLatentGraph({ graph }: ContextLatentGraphProps) {
+  const { nodes, edges } = useMemo(() => layoutGraph(graph), [graph]);
+  const nodeMap = useMemo(
+    () => Object.fromEntries(nodes.map((n) => [n.id, n])),
+    [nodes]
+  );
+
+  if (nodes.length === 0) {
+    return (
+      <div
+        className="mx-auto flex h-[140px] max-w-[280px] items-center justify-center text-center"
+        aria-hidden
+      >
+        <p className="max-w-[12rem] text-[var(--text-xs)] leading-relaxed text-text-muted/80">
+          Semantic relationships will gather as threads connect.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <motion.svg
-      viewBox="0 0 280 140"
+      viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
       className="mx-auto h-[140px] w-full max-w-[280px] text-accent-primary/40"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -40,13 +83,13 @@ export function ContextLatentGraph() {
         </linearGradient>
       </defs>
 
-      {edges.map(([a, b], i) => {
-        const na = nodeMap[a];
-        const nb = nodeMap[b];
+      {edges.map((edge, i) => {
+        const na = nodeMap[edge.source];
+        const nb = nodeMap[edge.target];
         if (!na || !nb) return null;
         return (
           <motion.line
-            key={`${a}-${b}`}
+            key={`${edge.source}-${edge.target}`}
             x1={na.cx}
             y1={na.cy}
             x2={nb.cx}

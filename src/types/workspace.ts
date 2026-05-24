@@ -14,10 +14,16 @@ export interface ThoughtThread {
   captured?: CapturedThoughtMeta;
 }
 
+export type ContinuitySuggestionAction =
+  | { type: "select-thread"; threadId: string }
+  | { type: "open-capture" };
+
 export interface ContinuitySuggestion {
   id: string;
   message: string;
   actionLabel?: string;
+  /** Optional calm affordance — derived by continuity intelligence. */
+  action?: ContinuitySuggestionAction;
 }
 
 export interface ActiveSession {

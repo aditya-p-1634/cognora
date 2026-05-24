@@ -42,15 +42,33 @@ export function hydrateThoughtForDisplay(
   record: PersistedCognitiveThought
 ): PersistedCognitiveThought {
   const lastTouched = formatContinuityRelativeTime(record.capturedAt);
+  const captured = {
+    thought: record.thought,
+    semanticTags: record.semanticTags,
+    emotionalTone: record.emotionalTone,
+    continuationMarker: record.continuationMarker || undefined,
+    markUnresolved: record.markUnresolved,
+    capturedAt: record.capturedAt,
+  };
+
   const thread: ThoughtThread = {
     ...record.thread,
     lastTouched,
-    captured: record.thread.captured
-      ? { ...record.thread.captured, thought: record.thought }
-      : undefined,
+    status: record.markUnresolved ? "unresolved" : record.thread.status,
+    captured,
   };
 
-  return { ...record, thread };
+  const context: ThoughtContext = {
+    ...record.context,
+    threadId: record.id,
+    summary: record.thought || record.context.summary,
+    recurringThemes:
+      record.semanticTags.length > 0
+        ? record.semanticTags
+        : record.context.recurringThemes,
+  };
+
+  return { ...record, thread, context };
 }
 
 export function hydrateThoughtsForDisplay(
