@@ -97,6 +97,8 @@ Keep motion timing aligned: tokens use `--duration-*` and `--ease-*`; `design.mo
 
 **Continuity intelligence (client):** `src/lib/intelligence/` derives whispers, latent semantic echoes, and a lightweight latent graph from merged feed threads + contexts (mock + persisted). `computeContinuityIntelligence()` runs in `WorkspaceProvider`; UI reads via `useContinuityIntelligence()`.
 
+**Relationship intelligence (client):** `src/lib/relationships/` scores deterministic thought-to-thought continuity (shared tags/themes, continuation lineage, unresolved resonance, tone overlap, language patterns). `computeThreadRelationships()` runs when a thread is selected; UI reads via `useThreadRelationships()`. Semantic normalization lives in `relationships/semantic/` and is shared with the intelligence layer.
+
 **Not yet present:** URL-synced selection, server state, global stores (Zustand/Redux), React Query, or optimistic updates.
 
 ### Component organization
@@ -115,7 +117,7 @@ src/
 ├── config/                 # navigation.ts, design.ts
 ├── data/mock/              # workspace mock data + context map
 ├── hooks/                  # use-sidebar, use-media-query
-├── lib/                    # cn(), continuity, persistence, intelligence
+├── lib/                    # cn(), continuity, persistence, intelligence, relationships
 ├── providers/              # workspace-provider.tsx
 ├── styles/                 # tokens.css
 └── types/                  # workspace domain types

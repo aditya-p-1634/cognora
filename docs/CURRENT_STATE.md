@@ -66,6 +66,14 @@
 - [x] Mock data: 4 threads, 2 suggestions, 1 session, per-thread context map
 - [x] Domain types in `src/types/workspace.ts`
 
+### Relationship intelligence engine
+
+- [x] `src/lib/relationships/` — deterministic scoring, semantic profiles, related-thought detection
+- [x] Shared semantic normalization (stopwords, token cleanup, recurring concept weights)
+- [x] Latent continuity weights for unresolved / resurfaced threads (ambient, non-intrusive)
+- [x] Context panel — adjacent cognition, continuity resonance, semantic overlap echoes
+- [x] `useThreadRelationships()` — decoupled from UI rendering; max 3 related thoughts
+
 ### Continuity intelligence layer
 
 - [x] `src/lib/intelligence/` — theme clustering, whisper derivation, latent echoes, data-driven latent graph
@@ -112,7 +120,7 @@
 ## Current workspace features (user-visible)
 
 1. **Browse thought threads** grouped by cognitive status along a visual timeline spine.
-2. **Select a thread** to highlight it in the feed and load structured context in the right panel.
+2. **Select a thread** to highlight it in the feed, load structured context, and surface adjacent cognition in the right panel.
 3. **Collapse or expand sidebar** on desktop; open/close nav drawer on mobile.
 4. **View session continuity cues** — restored session label, thread count, continuity depth (mock percentage).
 5. **Read continuity whispers** — observational suggestions derived from themes, unresolved loops, and session signals.

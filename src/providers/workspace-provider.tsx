@@ -25,6 +25,10 @@ import {
   type ContinuityIntelligence,
 } from "@/lib/intelligence";
 import {
+  computeThreadRelationships,
+  type ThreadRelationshipSnapshot,
+} from "@/lib/relationships";
+import {
   createPersistedThought,
   thoughtsToFeedDerivatives,
   upsertThought,
@@ -55,6 +59,7 @@ interface WorkspaceState {
   hasPersistedContinuity: boolean;
   isContinuityHydrated: boolean;
   continuityIntelligence: ContinuityIntelligence;
+  threadRelationships: ThreadRelationshipSnapshot | null;
 }
 
 interface WorkspaceActions {
@@ -195,6 +200,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       persistedThoughts.length,
     ]
   );
+
+  const threadRelationships = useMemo(() => {
+    if (!selectedThreadId) return null;
+    return computeThreadRelationships({
+      focusThreadId: selectedThreadId,
+      threads: feedThreads,
+      contextByThreadId: intelligenceContexts,
+    });
+  }, [selectedThreadId, feedThreads, intelligenceContexts]);
 
   const continuitySession = useMemo((): ActiveSession & { continuityDepth: number } => {
     const continuityDepth = computeContinuityDepth({
@@ -377,6 +391,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       hasPersistedContinuity,
       isContinuityHydrated,
       continuityIntelligence,
+      threadRelationships,
       setActiveNav,
       selectThread,
       toggleThread,
@@ -400,6 +415,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       hasPersistedContinuity,
       isContinuityHydrated,
       continuityIntelligence,
+      threadRelationships,
       selectThread,
       toggleThread,
       openCapture,
@@ -484,4 +500,9 @@ export function useContinuitySession() {
 export function useContinuityIntelligence() {
   const { continuityIntelligence } = useWorkspace();
   return continuityIntelligence;
+}
+
+export function useThreadRelationships() {
+  const { threadRelationships } = useWorkspace();
+  return threadRelationships;
 }

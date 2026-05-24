@@ -1,5 +1,28 @@
 import type { CaptureDraft, CapturedThoughtMeta } from "@/types/capture";
-import type { ThoughtContext, ThoughtThread } from "@/types/workspace";
+import type {
+  SemanticRelationship,
+  ThoughtContext,
+  ThoughtThread,
+} from "@/types/workspace";
+
+function inferCaptureRelationships(
+  threadId: string,
+  tags: string[]
+): SemanticRelationship[] {
+  const labels = tags.map((t) => t.trim()).filter(Boolean);
+  if (labels.length < 2) return [];
+
+  const relationships: SemanticRelationship[] = [];
+  for (let i = 0; i < labels.length - 1; i++) {
+    relationships.push({
+      id: `${threadId}-sr-${i}`,
+      source: labels[i],
+      target: labels[i + 1],
+      kind: "relates",
+    });
+  }
+  return relationships;
+}
 
 function firstLine(text: string): string {
   const line = text.split(/\n/)[0]?.trim() ?? "";
@@ -83,7 +106,7 @@ export function buildContextFromCapture(
       label,
       affinity: i === 0 ? "strong" : "moderate",
     })),
-    semanticRelationships: [],
+    semanticRelationships: inferCaptureRelationships(thread.id, themes),
     recurringThemes: themes,
     unresolvedContinuations: continuations,
     connectedSessions: [],
