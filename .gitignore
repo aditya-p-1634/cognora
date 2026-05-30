@@ -13,3 +13,5 @@ coverage
 *.tsbuildinfo
 
 .DS_Store
+
+cognora-1/
