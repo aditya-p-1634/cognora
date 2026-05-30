@@ -10,9 +10,17 @@ import {
 } from "react";
 
 import {
+	useCognitionField,
+} from "@/hooks/use-cognition-field";
+
+import {
 	assertObservabilityAccess,
 	isObservabilityEnabled,
 } from "@/lib/observability/guard";
+
+import {
+	deriveThoughtSnapshot,
+} from "@/lib/observability/derive-snapshot";
 
 import {
 	ThoughtDiagnosticSnapshot,
@@ -87,11 +95,112 @@ export function ObservabilityProvider({
 		};
 	}, [enabled]);
 
+	const cognitionField =
+		useCognitionField();
+
 	const snapshots = useMemo<
 		ThoughtDiagnosticSnapshot[]
 	>(() => {
-		return [];
-	}, []);
+		return cognitionField.threads.map(
+			(thread) => {
+				const gravity =
+					cognitionField.memoryGravity
+						.weights.get(
+							thread.id,
+						) ?? 0;
+
+				const resurfacingIndex =
+					cognitionField.memoryGravity
+						.resurfacingOrder.indexOf(
+							thread.id,
+						);
+
+				const integritySignal =
+					cognitionField
+						.semanticIntegrity
+						.signals.get(
+							thread.id,
+						);
+
+				return deriveThoughtSnapshot({
+					thoughtId: thread.id,
+
+					rawGravity: gravity,
+
+					effectiveGravity:
+						gravity,
+
+					integrityScore:
+					integritySignal?.signal ??
+					0.5,
+
+				integrityModulation:
+					1,
+
+				sessionDepth:
+					cognitionField
+						.continuitySession
+						.continuityDepth,
+
+			recurrenceStrength:
+				
+			Math.max(
+					0,
+					1 -
+						resurfacingIndex /
+							Math.max(
+								1,
+								cognitionField
+									.threads
+									.length,
+							),
+				),
+
+			topologyDensity:
+				Object.keys(
+					cognitionField.threadRelationships ?? {},
+				).length,
+
+			createdAt:
+				thread.lastTouched,
+
+			relationships: [],
+			
+					resurfacingReasons:
+						[
+							{
+								label:
+									"semantic resurfacing",
+
+								influence:
+									gravity,
+
+								description:
+									"thread remains active within the continuity field",
+							},
+						],
+
+					unresolved: {
+						active:
+							gravity > 0.7,
+
+						tension:
+							gravity > 0.7
+								? 0.8
+								: 0.2,
+
+						resurfacingPressure:
+							gravity,
+
+						description:
+							gravity > 0.7
+								? "continuity tension continues resurfacing"
+								: "continuity pressure remains stable",
+					},
+				});
+			},
+		);
+	}, [cognitionField]);
 
 	const value = useMemo(
 		() => ({

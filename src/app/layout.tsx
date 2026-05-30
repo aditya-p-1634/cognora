@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 
+import { WorkspaceProvider } from "../providers/workspace-provider";
 import { ObservabilityProvider } from "../providers/observability-provider";
 
 const geistSans = Geist({
@@ -31,9 +32,11 @@ export default function RootLayout({
 			className={`${geistSans.variable} ${geistMono.variable}`}
 		>
 			<body>
-				<ObservabilityProvider>
-					{children}
-				</ObservabilityProvider>
+				<WorkspaceProvider>
+					<ObservabilityProvider>
+						{children}
+					</ObservabilityProvider>
+				</WorkspaceProvider>
 			</body>
 		</html>
 	);
