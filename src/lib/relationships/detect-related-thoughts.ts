@@ -22,7 +22,7 @@ import type {
   ThoughtSemanticProfile,
 } from "@/lib/relationships/types";
 import type { ThoughtContext, ThoughtThread } from "@/types/workspace";
-
+ 
 export function scoreAllRelationships(
   focus: ThoughtSemanticProfile,
   profiles: Map<string, ThoughtSemanticProfile>,
@@ -33,35 +33,36 @@ export function scoreAllRelationships(
   }
 ): ScoredThreadRelationship[] {
   const scored: ScoredThreadRelationship[] = [];
-
+ 
   for (const [threadId, candidate] of profiles) {
     if (threadId === focus.threadId) continue;
-
-    const { totalScore, components, sharedThemes, sharedTokens } =
+ 
+    const { totalScore, components, sharedThemes, sharedTokens, dominantKind } =
       scoreRelationshipPair(focus, candidate, {
         recurringWeights: options?.recurringWeights,
         latentWeight: options?.latentWeights?.get(threadId),
         gravityWeight: options?.gravityWeights?.get(threadId),
       });
-
+ 
     if (totalScore < RELATIONSHIP_THRESHOLDS.minDisplayScore * 0.85) continue;
-
+ 
     scored.push({
       threadId,
       totalScore,
       components,
       sharedThemes,
       sharedTokens,
+      dominantKind,
     });
   }
-
+ 
   return scored.sort(
     (a, b) =>
       b.totalScore - a.totalScore ||
       a.threadId.localeCompare(b.threadId)
   );
 }
-
+ 
 export function detectRelatedThoughts(
   focus: ThoughtSemanticProfile,
   threads: ThoughtThread[],
@@ -70,20 +71,21 @@ export function detectRelatedThoughts(
 ): RelatedThought[] {
   const threadById = new Map(threads.map((t) => [t.id, t]));
   const limit = RELATIONSHIP_THRESHOLDS.maxRelatedThoughts;
-
+ 
   return scored.slice(0, limit).flatMap((entry) => {
     const thread = threadById.get(entry.threadId);
     const candidate = profiles.get(entry.threadId);
     if (!thread || !candidate) return [];
-
+ 
     const resonanceHint = deriveResonanceHint(
       entry.components,
       entry.sharedThemes,
       focus.themeLabels,
       candidate.isUnresolved,
-      candidate.emotionalTone
+      candidate.emotionalTone,
+      entry.dominantKind
     );
-
+ 
     return [
       {
         threadId: thread.id,
@@ -96,7 +98,7 @@ export function detectRelatedThoughts(
     ];
   });
 }
-
+ 
 export function buildRelationshipField(
   focusThreadId: string,
   threads: ThoughtThread[],
@@ -109,20 +111,20 @@ export function buildRelationshipField(
   const profiles = extractProfilesForThreads(threads, contextByThreadId);
   const focus = profiles.get(focusThreadId);
   if (!focus) return null;
-
+ 
   const recurringWeights = computeRecurringConceptWeights(profiles.values());
   const latentWeights = computeLatentContinuityWeights(
     threads,
     contextByThreadId,
     options?.gravityWeights
   );
-
+ 
   const rawScored = scoreAllRelationships(focus, profiles, {
     recurringWeights,
     latentWeights,
     gravityWeights: options?.gravityWeights,
   });
-
+ 
   const scored = options?.cognitionSignals
     ? applyIntegrityToRelationships(
         focus,
@@ -132,14 +134,14 @@ export function buildRelationshipField(
         recurringWeights
       )
     : rawScored;
-
+ 
   const relatedThoughts = detectRelatedThoughts(
     focus,
     threads,
     profiles,
     scored
   );
-
+ 
   const sharedResonance = options?.cognitionSignals
     ? filterResonanceThemes(
         scored as ReturnType<typeof applyIntegrityToRelationships>,
@@ -153,11 +155,11 @@ export function buildRelationshipField(
           )
         ),
       ].slice(0, RELATIONSHIP_THRESHOLDS.maxSharedResonance);
-
+ 
   const continuityEchoes: string[] = [];
   for (const entry of scored) {
     if (continuityEchoes.length >= RELATIONSHIP_THRESHOLDS.maxContinuityEchoes) break;
-
+ 
     const integrityEntry = entry as { confidence?: number };
     if (
       options?.cognitionSignals &&
@@ -166,7 +168,7 @@ export function buildRelationshipField(
     ) {
       continue;
     }
-
+ 
     const echo = deriveContinuityEcho(
       focus.themeLabels,
       entry.sharedThemes,
@@ -176,7 +178,7 @@ export function buildRelationshipField(
       continuityEchoes.push(echo);
     }
   }
-
+ 
   return {
     focus,
     profiles,

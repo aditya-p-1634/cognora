@@ -5,8 +5,8 @@ import {
   toDisplayLabel,
   tokenizeSemanticText,
 } from "@/lib/relationships/semantic/normalize";
-import type { ThoughtSemanticProfile } from "@/lib/relationships/types";
-
+import type { ThoughtSemanticProfile, SemanticRelationKind } from "@/lib/relationships/types";
+ 
 function registerTheme(
   themes: Set<string>,
   labels: Record<string, string>,
@@ -17,7 +17,7 @@ function registerTheme(
   themes.add(key);
   if (!labels[key]) labels[key] = toDisplayLabel(raw.trim());
 }
-
+ 
 export function extractThoughtProfile(
   thread: ThoughtThread,
   context: ThoughtContext | undefined
@@ -25,15 +25,15 @@ export function extractThoughtProfile(
   const themes = new Set<string>();
   const themeLabels: Record<string, string> = {};
   const tags = new Set<string>();
-
+ 
   for (const theme of context?.recurringThemes ?? []) {
     registerTheme(themes, themeLabels, theme);
   }
-
+ 
   for (const concept of context?.relatedConcepts ?? []) {
     registerTheme(themes, themeLabels, concept.label);
   }
-
+ 
   for (const tag of thread.captured?.semanticTags ?? []) {
     const key = normalizeSemanticKey(tag);
     if (key) {
@@ -41,7 +41,7 @@ export function extractThoughtProfile(
       registerTheme(themes, themeLabels, tag);
     }
   }
-
+ 
   const textParts = [
     thread.title,
     thread.excerpt,
@@ -49,28 +49,52 @@ export function extractThoughtProfile(
     thread.captured?.thought ?? "",
     ...(context?.unresolvedContinuations ?? []),
   ];
-
+ 
   const tokens = tokenizeSemanticText(textParts.join(" "));
-
+ 
   for (const token of tokens.slice(0, 6)) {
     if (token.length >= 5) registerTheme(themes, themeLabels, token);
   }
-
+ 
   const continuationRaw = [
     thread.captured?.continuationMarker ?? "",
     ...(context?.unresolvedContinuations ?? []),
   ]
     .filter(Boolean)
     .join(" ");
-
+ 
   const continuationTokens = tokenizeSemanticText(continuationRaw, { maxTokens: 24 });
-
+ 
   const emotionalTone: EmotionalTone | null =
     thread.captured?.emotionalTone ?? null;
-
+ 
   const isUnresolved =
     thread.status === "unresolved" || Boolean(thread.captured?.markUnresolved);
-
+ 
+  // ── SemanticRelationKind extraction ─────────────────────────────────────
+  //
+  // Read context.semanticRelationships and build a directed kind map.
+  // Key: "<normalizedSource>→<normalizedTarget>"
+  // Value: SemanticRelationKind
+  //
+  // Both source and target are also registered as themes — a declared
+  // relationship between two concepts implies both are semantically present
+  // in this thought's field.
+  const relationKinds = new Map<string, SemanticRelationKind>();
+ 
+  for (const rel of context?.semanticRelationships ?? []) {
+    const srcKey = normalizeSemanticKey(rel.source);
+    const tgtKey = normalizeSemanticKey(rel.target);
+    if (!srcKey || !tgtKey || srcKey === tgtKey) continue;
+ 
+    // Register both ends as themes so they participate in shared-theme scoring
+    registerTheme(themes, themeLabels, rel.source);
+    registerTheme(themes, themeLabels, rel.target);
+ 
+    // Store the directed kind for use in scoreRelationshipPair
+    relationKinds.set(`${srcKey}→${tgtKey}`, rel.kind);
+  }
+ 
   return {
     threadId: thread.id,
     themes: [...themes].sort((a, b) => a.localeCompare(b)),
@@ -81,9 +105,12 @@ export function extractThoughtProfile(
     isUnresolved,
     status: thread.status,
     themeLabels,
+    // Only include relationKinds when data exists — avoids empty Map overhead
+    // in lightweight callers like gravity reach computation
+    relationKinds: relationKinds.size > 0 ? relationKinds : undefined,
   };
 }
-
+ 
 export function extractProfilesForThreads(
   threads: ThoughtThread[],
   contextByThreadId: Record<string, ThoughtContext>
@@ -97,19 +124,19 @@ export function extractProfilesForThreads(
   }
   return map;
 }
-
+ 
 /** Themes shared across the workspace — strengthens recurring conceptual language. */
 export function computeRecurringConceptWeights(
   profiles: Iterable<ThoughtSemanticProfile>
 ): Map<string, number> {
   const counts = new Map<string, number>();
-
+ 
   for (const profile of profiles) {
     for (const theme of profile.themes) {
       counts.set(theme, (counts.get(theme) ?? 0) + 1);
     }
   }
-
+ 
   const weights = new Map<string, number>();
   for (const [theme, count] of counts) {
     if (count >= 2) {
