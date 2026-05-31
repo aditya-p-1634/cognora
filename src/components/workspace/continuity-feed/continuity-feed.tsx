@@ -156,6 +156,12 @@ export function ContinuityFeed() {
 		return map;
 	}, [relationships]);
 
+	const relatedCount =
+		relatedMap.size;
+
+	const hasRelatedThoughts =
+		relatedCount > 0;
+
 	const focus = allThreads.filter(
 		(t) => t.status === "focus",
 	);
@@ -204,6 +210,9 @@ export function ContinuityFeed() {
 				"relative px-[var(--spacing-feed-x)] py-[var(--spacing-feed-y)]",
 				hasThreadSelection &&
 					"feed-has-selection",
+
+				hasRelatedThoughts &&
+					"feed-relationship-field",
 			)}
 		>
 			<div
@@ -224,6 +233,12 @@ export function ContinuityFeed() {
 						}
 						selectedThreadId={
 							selectedThreadId
+						}
+						relatedCount={
+							relatedCount
+						}
+						hasRelatedThoughts={
+							hasRelatedThoughts
 						}
 					/>
 

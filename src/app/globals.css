@@ -500,3 +500,55 @@
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
   }
 }
+
+.continuity-spine-field-active {
+	background: linear-gradient(
+		180deg,
+		rgb(139 159 216 / 0%) 0%,
+		rgb(139 159 216 / 32%) 40%,
+		rgb(139 159 216 / 22%) 70%,
+		transparent 100%
+	);
+
+	filter: blur(4px);
+}
+
+.feed-relationship-field::before {
+	content: "";
+
+	position: absolute;
+	inset: 0;
+
+	pointer-events: none;
+
+	background:
+		radial-gradient(
+			ellipse 60% 35% at 18% 30%,
+			rgb(139 159 216 / 3.5%),
+			transparent 70%
+		),
+		radial-gradient(
+			ellipse 45% 28% at 72% 60%,
+			rgb(114 168 164 / 2.5%),
+			transparent 72%
+		);
+
+	animation:
+		continuity-field-breathe
+		12s
+		ease-in-out
+		infinite;
+}
+
+@keyframes continuity-field-breathe {
+	0%,
+	100% {
+		opacity: 0.35;
+		transform: scale(1);
+	}
+
+	50% {
+		opacity: 0.7;
+		transform: scale(1.015);
+	}
+}
