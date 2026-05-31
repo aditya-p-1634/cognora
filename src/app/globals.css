@@ -1,20 +1,20 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
-
+ 
 @layer base {
   *,
   *::before,
   *::after {
     border-color: var(--color-border-subtle);
   }
-
+ 
   html {
     color-scheme: dark;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
-
+ 
   body {
     @apply min-h-screen overflow-x-hidden bg-bg-base text-text-primary antialiased;
     font-family: var(--font-sans);
@@ -22,25 +22,25 @@
     line-height: var(--leading-normal);
     letter-spacing: var(--tracking-normal);
   }
-
+ 
   ::selection {
     background: var(--color-accent-primary-muted);
     color: var(--color-text-primary);
   }
 }
-
+ 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-
+ 
   .type-display {
     font-size: var(--text-display);
     font-weight: 500;
     letter-spacing: var(--tracking-tight);
     line-height: var(--leading-tight);
   }
-
+ 
   .type-label {
     font-size: var(--text-xs);
     font-weight: 500;
@@ -48,23 +48,23 @@
     text-transform: uppercase;
     color: var(--color-text-muted);
   }
-
+ 
   .type-prose {
     font-size: var(--text-sm);
     line-height: var(--leading-relaxed);
     color: var(--color-text-tertiary);
   }
-
+ 
   .panel-surface {
     background: var(--color-bg-panel);
     box-shadow: var(--shadow-panel);
   }
-
+ 
   .glass-surface {
     background: var(--color-bg-glass);
     backdrop-filter: blur(24px) saturate(1.15);
   }
-
+ 
   .cognitive-divider {
     height: 1px;
     background: linear-gradient(
@@ -75,7 +75,7 @@
       transparent
     );
   }
-
+ 
   .workspace-ambient {
     background-color: var(--color-bg-base);
     background-image:
@@ -83,7 +83,7 @@
       radial-gradient(ellipse 60% 40% at 100% 50%, var(--color-ambient-calm), transparent 50%),
       radial-gradient(ellipse 50% 30% at 0% 80%, var(--color-ambient-warm), transparent 45%);
   }
-
+ 
   .feed-surface {
     background: linear-gradient(
       180deg,
@@ -91,19 +91,19 @@
       var(--color-bg-base) 100%
     );
   }
-
+ 
   .feed-selection-glow {
     box-shadow: var(--shadow-glow-accent-strong);
   }
-
+ 
   .feed-has-selection {
     --feed-ambient-dim: 0.94;
   }
-
+ 
   .feed-has-selection .continuity-spine-aura {
     opacity: 0.5;
   }
-
+ 
   .continuity-spine {
     background: linear-gradient(
       180deg,
@@ -113,7 +113,7 @@
       transparent 100%
     );
   }
-
+ 
   .thread-flow-hover {
     background: linear-gradient(
       90deg,
@@ -121,7 +121,7 @@
       transparent 55%
     );
   }
-
+ 
   .thread-active-emphasis {
     background: linear-gradient(
       90deg,
@@ -132,7 +132,7 @@
     );
     box-shadow: var(--shadow-thread-magnetic);
   }
-
+ 
   .thread-semantic-unresolved:not(.thread-selected) {
     border-left: 1px solid transparent;
     background-image: linear-gradient(
@@ -141,7 +141,45 @@
       transparent 48%
     );
   }
+ 
+  /*
+   * Related thought ambient lift — three affinity levels.
+   *
+   * These express semantic proximity through left-edge luminance.
+   * The inset shadow creates a 2px luminous border along the spine-adjacent
+   * edge — the thought is lit from the spine side, as if the connection
+   * between thoughts is casting a faint light.
+   *
+   * Calibration:
+   *   near:     inset 9% + bloom 4%  — below thread-flow-hover (6%) on outer, above on inner
+   *   adjacent: inset 5% + bloom 2%  — perceptible but secondary
+   *   latent:   inset 2.5% + bloom 1% — barely present; confirmed by hover only
+   *
+   * All values are well below thread-active-emphasis (14%) and feed-selection-glow.
+   * The bloom uses accent-primary because the relationship engine uses the same
+   * color vocabulary in RelatedCognitionList affinity dots.
+   */
+.thread-related-near {
+  box-shadow:
+    inset 2px 0 0 rgb(139 159 216 / 18%),
+    -2px 0 16px rgb(139 159 216 / 9%);
+  transition: box-shadow var(--duration-normal) var(--ease-calm);
+}
 
+.thread-related-adjacent {
+  box-shadow:
+    inset 2px 0 0 rgb(139 159 216 / 11%),
+    -2px 0 12px rgb(139 159 216 / 5%);
+  transition: box-shadow var(--duration-normal) var(--ease-calm);
+}
+
+.thread-related-latent {
+  box-shadow:
+    inset 2px 0 0 rgb(139 159 216 / 6%),
+    -2px 0 8px rgb(139 159 216 / 2.5%);
+  transition: box-shadow var(--duration-normal) var(--ease-calm);
+}
+ 
   .continuity-spine-emphasis {
     background: linear-gradient(
       180deg,
@@ -154,7 +192,7 @@
     );
     box-shadow: 0 0 18px var(--color-continuity-propagation);
   }
-
+ 
   .continuity-spine-propagation {
     background: linear-gradient(
       180deg,
@@ -163,7 +201,7 @@
       transparent 72%
     );
   }
-
+ 
   .continuity-spine-aura {
     background: linear-gradient(
       180deg,
@@ -173,13 +211,13 @@
     );
     filter: blur(3px);
   }
-
+ 
   .continuity-spine-node-glow {
     box-shadow:
       0 0 12px var(--color-continuity-pulse),
       0 0 24px rgb(114 168 164 / 18%);
   }
-
+ 
   .whispers-ambient {
     background: radial-gradient(
       ellipse 90% 70% at 10% 50%,
@@ -187,7 +225,7 @@
       transparent 65%
     );
   }
-
+ 
   .whisper-line {
     background: linear-gradient(
       90deg,
@@ -196,11 +234,11 @@
       transparent 100%
     );
   }
-
+ 
   .whisper-message {
     text-shadow: 0 0 40px rgb(201 176 138 / 6%);
   }
-
+ 
   .context-panel-active {
     background: linear-gradient(
       180deg,
@@ -208,17 +246,17 @@
       rgb(15 17 21 / 88%) 100%
     );
   }
-
+ 
   .context-atmosphere {
     background:
       radial-gradient(ellipse 70% 50% at 50% 20%, var(--color-ambient-accent), transparent 60%),
       radial-gradient(ellipse 50% 40% at 80% 80%, var(--color-ambient-calm), transparent 50%);
   }
-
+ 
   .semantic-shimmer {
     animation: semantic-shimmer 5s var(--ease-calm) infinite;
   }
-
+ 
   @keyframes semantic-shimmer {
     0%,
     100% {
@@ -228,7 +266,7 @@
       opacity: 0.7;
     }
   }
-
+ 
   @keyframes continuity-drift {
     0%,
     100% {
@@ -240,11 +278,11 @@
       opacity: 0.65;
     }
   }
-
+ 
   .continuity-drift {
     animation: continuity-drift 6s var(--ease-calm) infinite;
   }
-
+ 
   .capture-overlay-backdrop {
     background:
       radial-gradient(ellipse 110% 80% at 50% 40%, rgb(139 159 216 / 7%), transparent 58%),
@@ -257,7 +295,7 @@
       );
     backdrop-filter: blur(14px) saturate(1.05);
   }
-
+ 
   .capture-overlay-backdrop-deep {
     background: rgb(8 9 11 / 14%);
     backdrop-filter: blur(22px) saturate(1.06);
@@ -267,7 +305,7 @@
       transparent 80%
     );
   }
-
+ 
   .capture-fog-edge {
     background: radial-gradient(
       ellipse 98% 88% at 50% 44%,
@@ -276,7 +314,7 @@
       rgb(8 9 11 / 22%) 100%
     );
   }
-
+ 
   .capture-fog-lift {
     background: radial-gradient(
       ellipse 80% 55% at 50% 32%,
@@ -286,14 +324,14 @@
     opacity: 0.38;
     animation: capture-fog-drift 14s var(--ease-calm) infinite;
   }
-
+ 
   .capture-cognition-glow {
     background:
       radial-gradient(ellipse 55% 45% at 50% 38%, rgb(139 159 216 / 7%), transparent 68%),
       radial-gradient(ellipse 40% 35% at 72% 62%, rgb(114 168 164 / 5%), transparent 70%);
     animation: capture-cognition-drift 18s var(--ease-calm) infinite;
   }
-
+ 
   @keyframes capture-fog-drift {
     0%,
     100% {
@@ -305,7 +343,7 @@
       transform: translateY(-6px) scale(1.02);
     }
   }
-
+ 
   @keyframes capture-cognition-drift {
     0%,
     100% {
@@ -317,11 +355,11 @@
       transform: translate(2%, -1%) scale(1.03);
     }
   }
-
+ 
   .capture-pause-shell {
     background: transparent;
   }
-
+ 
   .capture-gravity-zone {
     background: radial-gradient(
       ellipse 95% 88% at 50% 45%,
@@ -330,7 +368,7 @@
       transparent 100%
     );
   }
-
+ 
   .capture-thinking-hold {
     background: rgb(20 24 32 / 42%);
     border-radius: var(--radius-xl);
@@ -338,7 +376,7 @@
       inset 0 1px 0 rgb(255 255 255 / 5%),
       0 0 0 1px rgb(255 255 255 / 5%);
   }
-
+ 
   .capture-thinking-hold:focus-within {
     background: rgb(22 26 34 / 52%);
     box-shadow:
@@ -346,7 +384,7 @@
       0 0 0 1px rgb(139 159 216 / 12%),
       0 0 56px rgb(139 159 216 / 6%);
   }
-
+ 
   .capture-optional-hold {
     background: rgb(14 17 22 / 36%);
     border-radius: var(--radius-lg);
@@ -354,11 +392,11 @@
       inset 0 1px 0 rgb(255 255 255 / 4%),
       0 0 0 1px rgb(255 255 255 / 3%);
   }
-
+ 
   .capture-thinking-field {
     caret-color: rgb(139 159 216 / 58%);
   }
-
+ 
   .capture-thinking-field::placeholder {
     color: var(--color-text-tertiary);
     opacity: 0.78;
@@ -366,11 +404,11 @@
     font-weight: 400;
     transition: opacity 0.4s var(--ease-calm);
   }
-
+ 
   .capture-thinking-field:focus::placeholder {
     opacity: 0.5;
   }
-
+ 
   .capture-scroll-fade-top {
     position: sticky;
     top: 0;
@@ -380,7 +418,7 @@
     background: linear-gradient(180deg, rgb(14 16 21 / 92%), transparent);
     pointer-events: none;
   }
-
+ 
   .capture-scroll-fade-bottom {
     position: sticky;
     bottom: 0;
@@ -390,67 +428,67 @@
     background: linear-gradient(0deg, rgb(14 16 21 / 78%), transparent);
     pointer-events: none;
   }
-
+ 
   .capture-thinking-field:focus {
     outline: none;
   }
-
+ 
   .capture-whisper-field {
     border-bottom: 1px solid rgb(255 255 255 / 5%);
     transition: border-color 0.4s var(--ease-calm);
   }
-
+ 
   .capture-whisper-field:hover,
   .capture-whisper-field:focus {
     border-bottom-color: rgb(139 159 216 / 16%);
     outline: none;
   }
-
+ 
   .capture-tone-field .capture-tone-option {
     opacity: 0.48;
     transition:
       opacity 0.4s var(--ease-calm),
       color 0.4s var(--ease-calm);
   }
-
+ 
   .capture-tone-field:hover .capture-tone-option,
   .capture-tone-field:focus-within .capture-tone-option {
     opacity: 0.68;
   }
-
+ 
   .capture-tone-field .capture-tone-option:hover,
   .capture-tone-field .capture-tone-option:focus-visible {
     opacity: 0.92;
   }
-
+ 
   .capture-tone-field .capture-tone-option[aria-pressed="true"] {
     opacity: 0.9;
     color: var(--color-accent-calm);
   }
-
+ 
   .capture-scroll-region {
     scrollbar-width: thin;
     scrollbar-color: rgb(255 255 255 / 12%) transparent;
     scroll-behavior: smooth;
   }
-
+ 
   .capture-scroll-region::-webkit-scrollbar {
     width: 5px;
   }
-
+ 
   .capture-scroll-region::-webkit-scrollbar-track {
     background: transparent;
   }
-
+ 
   .capture-scroll-region::-webkit-scrollbar-thumb {
     background: rgb(255 255 255 / 10%);
     border-radius: 999px;
   }
-
+ 
   .capture-scroll-region::-webkit-scrollbar-thumb:hover {
     background: rgb(255 255 255 / 16%);
   }
-
+ 
   .capture-footer-anchor {
     background: linear-gradient(
       180deg,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 import { design } from "@/config/design";
@@ -10,199 +11,384 @@ import { ThoughtThreadRow } from "./thought-thread-row";
 import { ContinuitySuggestions } from "./continuity-suggestions";
 import { ContinuitySpine } from "./continuity-spine";
 import { sortThreadsByGravity } from "@/lib/gravity";
+import type { RelationshipAffinity } from "@/lib/relationships";
 import {
-  useCapture,
-  useContinuityIntelligence,
-  useFeedThreads,
-  useMemoryGravity,
-  useSemanticIntegrity,
-  useThreadSelection,
+	useCapture,
+	useContinuityIntelligence,
+	useFeedThreads,
+	useMemoryGravity,
+	useSemanticIntegrity,
+	useThreadRelationships,
+	useThreadSelection,
 } from "@/providers/workspace-provider";
 
 const sectionMotion = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
+	initial: { opacity: 0, y: 10 },
+	animate: { opacity: 1, y: 0 },
 };
 
 function ThreadList({
-  threads,
-  selectedThreadId,
-  hasThreadSelection,
-  onSelect,
-  primaryFirst,
-  recentlyCapturedId,
-  gravityWeights,
-  cognitionSignals,
+	threads,
+	selectedThreadId,
+	hasThreadSelection,
+	onSelect,
+	primaryFirst,
+	recentlyCapturedId,
+	gravityWeights,
+	cognitionSignals,
+	relatedMap,
 }: {
-  threads: ReturnType<typeof useFeedThreads>;
-  selectedThreadId: string | null;
-  hasThreadSelection: boolean;
-  onSelect: (id: string) => void;
-  primaryFirst?: boolean;
-  recentlyCapturedId: string | null;
-  gravityWeights: Map<string, number>;
-  cognitionSignals: Map<string, { signal: number }>;
+	threads: ReturnType<typeof useFeedThreads>;
+	selectedThreadId: string | null;
+	hasThreadSelection: boolean;
+	onSelect: (id: string) => void;
+	primaryFirst?: boolean;
+	recentlyCapturedId: string | null;
+	gravityWeights: Map<string, number>;
+	cognitionSignals: Map<string, { signal: number }>;
+	relatedMap: Map<string, RelationshipAffinity>;
 }) {
-  return (
-    <>
-      {threads.map((thread, i) => {
-        const selected = selectedThreadId === thread.id;
-        const dimmed = hasThreadSelection && !selected;
+	return (
+		<>
+			{threads.map((thread, i) => {
+				const selected =
+					selectedThreadId === thread.id;
 
-        return (
-          <ThoughtThreadRow
-            key={thread.id}
-            thread={thread}
-            selected={selected}
-            dimmed={dimmed}
-            onSelect={() => onSelect(thread.id)}
-            prominence={primaryFirst && i === 0 ? "primary" : "default"}
-            isLast={i === threads.length - 1}
-            isEmerging={recentlyCapturedId === thread.id}
-            gravityWeight={
-              (gravityWeights.get(thread.id) ?? 0) *
-              (0.5 + 0.5 * (cognitionSignals.get(thread.id)?.signal ?? 0.4))
-            }
-          />
-        );
-      })}
-    </>
-  );
+				const dimmed =
+					hasThreadSelection &&
+					!selected;
+
+				const affinity =
+					relatedMap.get(thread.id) ??
+					null;
+
+				return (
+					<ThoughtThreadRow
+						key={thread.id}
+						thread={thread}
+						selected={selected}
+						dimmed={dimmed}
+						onSelect={() =>
+							onSelect(thread.id)
+						}
+						prominence={
+							primaryFirst &&
+							i === 0
+								? "primary"
+								: "default"
+						}
+						isLast={
+							i ===
+							threads.length - 1
+						}
+						isEmerging={
+							recentlyCapturedId ===
+							thread.id
+						}
+						gravityWeight={
+							(gravityWeights.get(
+								thread.id,
+							) ?? 0) *
+							(0.5 +
+								0.5 *
+									(cognitionSignals.get(
+										thread.id,
+									)?.signal ??
+										0.4))
+						}
+						isRelated={
+							affinity !== null
+						}
+						relationAffinity={
+							affinity
+						}
+					/>
+				);
+			})}
+		</>
+	);
 }
 
 export function ContinuityFeed() {
-  const { selectedThreadId, hasThreadSelection, toggleThread } = useThreadSelection();
-  const { recentlyCapturedId } = useCapture();
-  const { suggestions } = useContinuityIntelligence();
-  const { weights } = useMemoryGravity();
-  const { signals: cognitionSignals } = useSemanticIntegrity();
-  const allThreads = useFeedThreads();
+	const {
+		selectedThreadId,
+		hasThreadSelection,
+		toggleThread,
+	} = useThreadSelection();
 
-  const focus = allThreads.filter((t) => t.status === "focus");
-  const active = sortThreadsByGravity(
-    allThreads.filter((t) => t.status === "active"),
-    weights
-  );
-  const unresolved = sortThreadsByGravity(
-    allThreads.filter((t) => t.status === "unresolved"),
-    weights
-  );
-  const resurfaced = sortThreadsByGravity(
-    allThreads.filter((t) => t.status === "resurfaced"),
-    weights
-  );
+	const { recentlyCapturedId } =
+		useCapture();
 
-  return (
-    <div
-      className={cn(
-        "relative px-[var(--spacing-feed-x)] py-[var(--spacing-feed-y)]",
-        hasThreadSelection && "feed-has-selection"
-      )}
-    >
-      <div
-        className="mx-auto w-full"
-        style={{ maxWidth: "var(--width-feed)" }}
-      >
-        <FeedHero />
-        <CognitiveStateStrip />
+	const { suggestions } =
+		useContinuityIntelligence();
 
-        <div className="relative pl-4 sm:pl-5">
-          <ContinuitySpine
-            hasThreadSelection={hasThreadSelection}
-            selectedThreadId={selectedThreadId}
-          />
+	const { weights } =
+		useMemoryGravity();
 
-          <motion.div
-            className="space-y-11"
-            initial="initial"
-            animate="animate"
-            variants={{
-              initial: {},
-              animate: {
-                transition: { staggerChildren: 0.06, delayChildren: 0.08 },
-              },
-            }}
-          >
-            <motion.div
-              variants={sectionMotion}
-              transition={{ duration: design.motion.normal, ease: design.motion.enter }}
-            >
-              <FeedSection label="Now in focus" count={focus.length}>
-                <ThreadList
-                  threads={focus}
-                  selectedThreadId={selectedThreadId}
-                  hasThreadSelection={hasThreadSelection}
-                  onSelect={toggleThread}
-                  primaryFirst
-                  recentlyCapturedId={recentlyCapturedId}
-                  gravityWeights={weights}
-                  cognitionSignals={cognitionSignals}
-                />
-              </FeedSection>
-            </motion.div>
+	const {
+		signals: cognitionSignals,
+	} = useSemanticIntegrity();
 
-            <motion.div
-              variants={sectionMotion}
-              transition={{ duration: design.motion.normal, ease: design.motion.enter }}
-            >
-              <FeedSection label="Active threads" count={active.length}>
-                <ThreadList
-                  threads={active}
-                  selectedThreadId={selectedThreadId}
-                  hasThreadSelection={hasThreadSelection}
-                  onSelect={toggleThread}
-                  recentlyCapturedId={recentlyCapturedId}
-                  gravityWeights={weights}
-                  cognitionSignals={cognitionSignals}
-                />
-              </FeedSection>
-            </motion.div>
+	const allThreads =
+		useFeedThreads();
 
-            <motion.div
-              variants={sectionMotion}
-              transition={{ duration: design.motion.normal, ease: design.motion.enter }}
-            >
-              <FeedSection label="Unresolved" count={unresolved.length}>
-                <ThreadList
-                  threads={unresolved}
-                  selectedThreadId={selectedThreadId}
-                  hasThreadSelection={hasThreadSelection}
-                  onSelect={toggleThread}
-                  recentlyCapturedId={recentlyCapturedId}
-                  gravityWeights={weights}
-                  cognitionSignals={cognitionSignals}
-                />
-              </FeedSection>
-            </motion.div>
+	const relationships =
+		useThreadRelationships();
 
-            <motion.div
-              variants={sectionMotion}
-              transition={{ duration: design.motion.normal, ease: design.motion.enter }}
-            >
-              <FeedSection label="Resurfaced" count={resurfaced.length} subdued>
-                <ThreadList
-                  threads={resurfaced}
-                  selectedThreadId={selectedThreadId}
-                  hasThreadSelection={hasThreadSelection}
-                  onSelect={toggleThread}
-                  recentlyCapturedId={recentlyCapturedId}
-                  gravityWeights={weights}
-                  cognitionSignals={cognitionSignals}
-                />
-              </FeedSection>
-            </motion.div>
+	const relatedMap = useMemo<
+		Map<string, RelationshipAffinity>
+	>(() => {
+		if (!relationships)
+			return new Map();
 
-            <motion.div
-              variants={sectionMotion}
-              transition={{ duration: design.motion.normal, ease: design.motion.enter }}
-            >
-              <ContinuitySuggestions suggestions={suggestions} />
-            </motion.div>
-          </motion.div>
-        </div>
+		const map = new Map<
+			string,
+			RelationshipAffinity
+		>();
 
-        <div className="h-12" aria-hidden />
-      </div>
-    </div>
-  );
+		for (const rt of relationships.relatedThoughts) {
+			map.set(
+				rt.threadId,
+				rt.affinity,
+			);
+		}
+
+		return map;
+	}, [relationships]);
+
+	const focus = allThreads.filter(
+		(t) => t.status === "focus",
+	);
+
+	const active =
+		sortThreadsByGravity(
+			allThreads.filter(
+				(t) => t.status === "active",
+			),
+			weights,
+		);
+
+	const unresolved =
+		sortThreadsByGravity(
+			allThreads.filter(
+				(t) =>
+					t.status ===
+					"unresolved",
+			),
+			weights,
+		);
+
+	const resurfaced =
+		sortThreadsByGravity(
+			allThreads.filter(
+				(t) =>
+					t.status ===
+					"resurfaced",
+			),
+			weights,
+		);
+
+	const sharedProps = {
+		selectedThreadId,
+		hasThreadSelection,
+		onSelect: toggleThread,
+		recentlyCapturedId,
+		gravityWeights: weights,
+		cognitionSignals,
+		relatedMap,
+	};
+
+	return (
+		<div
+			className={cn(
+				"relative px-[var(--spacing-feed-x)] py-[var(--spacing-feed-y)]",
+				hasThreadSelection &&
+					"feed-has-selection",
+			)}
+		>
+			<div
+				className="mx-auto w-full"
+				style={{
+					maxWidth:
+						"var(--width-feed)",
+				}}
+			>
+				<FeedHero />
+
+				<CognitiveStateStrip />
+
+				<div className="relative pl-4 sm:pl-5">
+					<ContinuitySpine
+						hasThreadSelection={
+							hasThreadSelection
+						}
+						selectedThreadId={
+							selectedThreadId
+						}
+					/>
+
+					<motion.div
+						className="space-y-11"
+						initial="initial"
+						animate="animate"
+						variants={{
+							initial: {},
+							animate: {
+								transition: {
+									staggerChildren:
+										0.06,
+									delayChildren:
+										0.08,
+								},
+							},
+						}}
+					>
+						<motion.div
+							variants={
+								sectionMotion
+							}
+							transition={{
+								duration:
+									design
+										.motion
+										.normal,
+								ease: design
+									.motion
+									.enter,
+							}}
+						>
+							<FeedSection
+								label="Now in focus"
+								count={
+									focus.length
+								}
+							>
+								<ThreadList
+									threads={
+										focus
+									}
+									primaryFirst
+									{...sharedProps}
+								/>
+							</FeedSection>
+						</motion.div>
+
+						<motion.div
+							variants={
+								sectionMotion
+							}
+							transition={{
+								duration:
+									design
+										.motion
+										.normal,
+								ease: design
+									.motion
+									.enter,
+							}}
+						>
+							<FeedSection
+								label="Active threads"
+								count={
+									active.length
+								}
+							>
+								<ThreadList
+									threads={
+										active
+									}
+									{...sharedProps}
+								/>
+							</FeedSection>
+						</motion.div>
+
+						<motion.div
+							variants={
+								sectionMotion
+							}
+							transition={{
+								duration:
+									design
+										.motion
+										.normal,
+								ease: design
+									.motion
+									.enter,
+							}}
+						>
+							<FeedSection
+								label="Unresolved"
+								count={
+									unresolved.length
+								}
+							>
+								<ThreadList
+									threads={
+										unresolved
+									}
+									{...sharedProps}
+								/>
+							</FeedSection>
+						</motion.div>
+
+						<motion.div
+							variants={
+								sectionMotion
+							}
+							transition={{
+								duration:
+									design
+										.motion
+										.normal,
+								ease: design
+									.motion
+									.enter,
+							}}
+						>
+							<FeedSection
+								label="Resurfaced"
+								count={
+									resurfaced.length
+								}
+								subdued
+							>
+								<ThreadList
+									threads={
+										resurfaced
+									}
+									{...sharedProps}
+								/>
+							</FeedSection>
+						</motion.div>
+
+						<motion.div
+							variants={
+								sectionMotion
+							}
+							transition={{
+								duration:
+									design
+										.motion
+										.normal,
+								ease: design
+									.motion
+									.enter,
+							}}
+						>
+							<ContinuitySuggestions
+								suggestions={
+									suggestions
+								}
+							/>
+						</motion.div>
+					</motion.div>
+				</div>
+
+				<div
+					className="h-12"
+					aria-hidden
+				/>
+			</div>
+		</div>
+	);
 }

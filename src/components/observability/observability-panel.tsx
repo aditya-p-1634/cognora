@@ -104,16 +104,86 @@ export function ObservabilityPanel() {
 											p-4
 										"
 									>
-										<p
-											className="
-												text-sm
-												text-white/80
-											"
-										>
-											{
-												snapshot.thoughtId
-											}
-										</p>
+										<div className="space-y-3">
+											<p
+												className="
+													text-sm
+													font-medium
+													text-white/90
+												"
+											>
+												{snapshot.thoughtId}
+											</p>
+
+											<div
+												className="
+													grid grid-cols-2 gap-2
+													text-xs
+													text-white/60
+												"
+											>
+												<div>
+													<span className="text-white/40">
+														Gravity
+													</span>
+													<br />
+													{snapshot.gravity.effective.toFixed(
+														2,
+													)}
+												</div>
+
+												<div>
+													<span className="text-white/40">
+														Integrity
+													</span>
+													<br />
+													{snapshot.semanticIntegrity.score.toFixed(
+														2,
+													)}
+												</div>
+
+												<div>
+													<span className="text-white/40">
+														Signal
+													</span>
+													<br />
+													{
+														snapshot.gravity
+															.signalStrength
+													}
+												</div>
+
+												<div>
+													<span className="text-white/40">
+														State
+													</span>
+													<br />
+													{
+														snapshot.gravity
+															.temporalState
+													}
+												</div>
+											</div>
+
+											<div
+												className="
+													border-t border-white/10
+													pt-3
+												"
+											>
+												<p
+													className="
+														text-xs
+														text-white/50
+													"
+												>
+													{
+														snapshot.semanticIntegrity
+															.description
+													}
+												</p>
+											</div>
+										</div>
 									</div>
 								),
 							)}
