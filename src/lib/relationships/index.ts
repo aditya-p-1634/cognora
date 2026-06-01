@@ -13,6 +13,7 @@ export {
 } from "./semantic/normalize";
 export { scoreRelationshipPair } from "./scoring/score-pair";
 export { RELATIONSHIP_THRESHOLDS, RELATIONSHIP_WEIGHTS } from "./scoring/constants";
+export { computeInfluenceField } from "./compute-influence-field";
 export type {
   RelatedThought,
   RelationshipAffinity,
@@ -21,4 +22,7 @@ export type {
   ScoredThreadRelationship,
   ThreadRelationshipSnapshot,
   ThoughtSemanticProfile,
+  InfluenceBand,
+  InfluenceEntry,
+  InfluenceField,
 } from "./types";

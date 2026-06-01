@@ -88,3 +88,31 @@ Always:
 - Spatial
 - Cognitive
 - Continuity-first
+
+## Completed
+
+### SemanticRelationKind Activation
+
+Status: Complete
+
+Implemented:
+
+- relationKinds extraction
+- kind-aware relationship scoring
+- dominant relationship detection
+- kind-specific resonance hints
+- semantic relationship visualization
+
+Supported Kinds:
+
+- continues
+- extends
+- informs
+- contrasts
+- relates
+
+Impact:
+
+Relationships are no longer treated as generic connections.
+The cognition engine now differentiates between continuation,
+extension, contrast, and informational influence.

@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import {
   createContext,
   useCallback,
@@ -37,7 +37,9 @@ import {
 import type { GravityLedger } from "@/types/gravity";
 import {
   computeThreadRelationships,
+  computeInfluenceField,
   type ThreadRelationshipSnapshot,
+  type InfluenceField,
 } from "@/lib/relationships";
 import {
   createPersistedThought,
@@ -54,7 +56,7 @@ import {
   getContextForThread,
   getThreadById,
 } from "@/data/mock/workspace";
-
+ 
 interface WorkspaceState {
   activeNav: NavItemId;
   selectedThreadId: string | null;
@@ -73,8 +75,9 @@ interface WorkspaceState {
   threadRelationships: ThreadRelationshipSnapshot | null;
   memoryGravity: ContinuityGravityField;
   semanticIntegrity: SemanticIntegrityField;
+  influenceField: InfluenceField;
 }
-
+ 
 interface WorkspaceActions {
   setActiveNav: (id: NavItemId) => void;
   selectThread: (id: string | null) => void;
@@ -84,13 +87,13 @@ interface WorkspaceActions {
   updateCaptureDraft: (patch: Partial<CaptureDraft>) => void;
   preserveThought: () => void;
 }
-
+ 
 type WorkspaceContextValue = WorkspaceState & WorkspaceActions;
-
+ 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
-
+ 
 const CAPTURE_EMERGENCE_MS = 2400;
-
+ 
 function resolvePersistedSelection(
   selectedThreadId: string | null,
   capturedThreads: ThoughtThread[]
@@ -99,7 +102,7 @@ function resolvePersistedSelection(
   const threads = mergeFeedThreads(capturedThreads);
   return threads.some((t) => t.id === selectedThreadId) ? selectedThreadId : null;
 }
-
+ 
 function resolveThread(
   threadId: string,
   capturedThreads: ThoughtThread[]
@@ -109,14 +112,14 @@ function resolveThread(
     getThreadById(threadId)
   );
 }
-
+ 
 function resolveContext(
   threadId: string,
   captureContextMap: Record<string, ThoughtContext>
 ): ThoughtContext | null {
   return captureContextMap[threadId] ?? getContextForThread(threadId);
 }
-
+ 
 function buildPersistencePayload(
   thoughts: PersistedCognitiveThought[],
   sessionStartedAt: string,
@@ -134,19 +137,19 @@ function buildPersistencePayload(
     gravityLedger,
   };
 }
-
+ 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [activeNav, setActiveNav] = useState<NavItemId>("dashboard");
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [isContextAwakening, setIsContextAwakening] = useState(false);
-
+ 
   const [isCaptureOpen, setIsCaptureOpen] = useState(false);
   const [captureDraft, setCaptureDraft] = useState<CaptureDraft>(EMPTY_CAPTURE_DRAFT);
   const [persistedThoughts, setPersistedThoughts] = useState<PersistedCognitiveThought[]>(
     []
   );
   const [recentlyCapturedId, setRecentlyCapturedId] = useState<string | null>(null);
-
+ 
   const [sessionLabel, setSessionLabel] = useState(mockSession.label);
   const [sessionStartedAt, setSessionStartedAt] = useState(() =>
     new Date().toISOString()
@@ -154,7 +157,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [hasPersistedContinuity, setHasPersistedContinuity] = useState(false);
   const [gravityLedger, setGravityLedger] = useState<GravityLedger>({});
-
+ 
   const {
     isHydrated: isContinuityHydrated,
     hydrate,
@@ -163,12 +166,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     persistNow,
   } = useWorkspacePersistence();
   const persistAfterHydrationRef = useRef(false);
-
+ 
   const { capturedThreads, captureContextMap } = useMemo(
     () => thoughtsToFeedDerivatives(persistedThoughts),
     [persistedThoughts]
   );
-
+ 
   const selectedThread = useMemo(
     () =>
       selectedThreadId
@@ -176,7 +179,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         : null,
     [selectedThreadId, capturedThreads]
   );
-
+ 
   const context = useMemo(
     () =>
       selectedThreadId
@@ -184,19 +187,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         : null,
     [selectedThreadId, captureContextMap]
   );
-
+ 
   const hasThreadSelection = selectedThreadId !== null;
-
+ 
   const feedThreads = useMemo(
     () => mergeFeedThreads(capturedThreads),
     [capturedThreads]
   );
-
+ 
   const intelligenceContexts = useMemo(
     () => resolveIntelligenceContexts(feedThreads, captureContextMap),
     [feedThreads, captureContextMap]
   );
-
+ 
   const rawMemoryGravity = useMemo(
     () =>
       computeGravityField({
@@ -206,7 +209,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }),
     [feedThreads, intelligenceContexts, gravityLedger]
   );
-
+ 
   const semanticIntegrity = useMemo(
     () =>
       computeSemanticIntegrityField({
@@ -217,7 +220,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }),
     [feedThreads, intelligenceContexts, rawMemoryGravity, gravityLedger]
   );
-
+ 
   const memoryGravity = useMemo(
     (): ContinuityGravityField => ({
       ...rawMemoryGravity,
@@ -226,7 +229,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }),
     [rawMemoryGravity, semanticIntegrity]
   );
-
+ 
   const continuityIntelligence = useMemo(
     () =>
       computeContinuityIntelligence({
@@ -252,7 +255,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       semanticIntegrity.signals,
     ]
   );
-
+ 
   const threadRelationships = useMemo(() => {
     if (!selectedThreadId) return null;
     return computeThreadRelationships(
@@ -273,7 +276,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     memoryGravity.weights,
     semanticIntegrity.signals,
   ]);
-
+ 
+  const influenceField = useMemo(
+    () =>
+      computeInfluenceField({
+        threads: feedThreads,
+        contextByThreadId: intelligenceContexts,
+        gravityWeights: memoryGravity.weights,
+      }),
+    [feedThreads, intelligenceContexts, memoryGravity.weights]
+  );
+ 
   const continuitySession = useMemo((): ActiveSession & { continuityDepth: number } => {
     const continuityDepth = computeContinuityDepth({
       threadCount: feedThreads.length,
@@ -282,7 +295,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       sessionStartedAt,
       lastSavedAt,
     });
-
+ 
     return {
       id: mockSession.id,
       label: sessionLabel,
@@ -298,7 +311,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     lastSavedAt,
     sessionLabel,
   ]);
-
+ 
   const syncPersistence = useCallback(
     (
       thoughts: PersistedCognitiveThought[],
@@ -312,13 +325,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         selectedThreadId,
         gravityLedger
       );
-
+ 
       if (options?.immediate) {
         persistNow(payload);
         setLastSavedAt(new Date().toISOString());
         return;
       }
-
+ 
       scheduleSave(payload);
     },
     [
@@ -331,7 +344,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       scheduleSave,
     ]
   );
-
+ 
   useEffect(() => {
     const snapshot = hydrate();
     if (snapshot) {
@@ -358,7 +371,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         Date.now()
       );
       setGravityLedger(ledger);
-
+ 
       persistNow(
         buildPersistencePayload(
           thoughts,
@@ -376,7 +389,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     persistAfterHydrationRef.current = true;
     completeHydration();
   }, [hydrate, completeHydration, persistNow]);
-
+ 
   useEffect(() => {
     if (!isContinuityHydrated || !persistAfterHydrationRef.current) return;
     syncPersistence(persistedThoughts);
@@ -390,13 +403,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     gravityLedger,
     syncPersistence,
   ]);
-
+ 
   useEffect(() => {
     if (!selectedThreadId) {
       setIsContextAwakening(false);
       return;
     }
-
+ 
     setIsContextAwakening(true);
     const timer = window.setTimeout(
       () => setIsContextAwakening(false),
@@ -404,21 +417,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     );
     return () => window.clearTimeout(timer);
   }, [selectedThreadId]);
-
+ 
   useEffect(() => {
     if (!recentlyCapturedId) return;
     const timer = window.setTimeout(
       () => setRecentlyCapturedId(null),
       CAPTURE_EMERGENCE_MS
     );
-    return () => window.clearTimeout(timer);
+    return () => window.clearTimeout(timer)
   }, [recentlyCapturedId]);
-
+ 
   const selectThread = useCallback(
     (id: string | null) => {
       setSelectedThreadId(id);
       if (!id) return;
-
+ 
       const thread =
         capturedThreads.find((t) => t.id === id) ?? getThreadById(id);
       setGravityLedger((prev) =>
@@ -427,7 +440,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     },
     [capturedThreads]
   );
-
+ 
   const toggleThread = useCallback(
     (id: string) => {
       setSelectedThreadId((prev) => {
@@ -444,42 +457,42 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     },
     [capturedThreads]
   );
-
+ 
   const openCapture = useCallback(() => {
     setCaptureDraft(EMPTY_CAPTURE_DRAFT);
     setIsCaptureOpen(true);
   }, []);
-
+ 
   const closeCapture = useCallback(() => {
     setIsCaptureOpen(false);
     setCaptureDraft(EMPTY_CAPTURE_DRAFT);
   }, []);
-
+ 
   const updateCaptureDraft = useCallback((patch: Partial<CaptureDraft>) => {
     setCaptureDraft((prev) => ({ ...prev, ...patch }));
   }, []);
-
+ 
   const preserveThought = useCallback(() => {
     const thought = captureDraft.thought.trim();
     if (!thought) return;
-
+ 
     const id = `cap-${Date.now()}`;
     const record = createPersistedThought(captureDraft, id);
     const nextThoughts = upsertThought(persistedThoughts, record);
-
+ 
     setPersistedThoughts(nextThoughts);
     setRecentlyCapturedId(id);
     setIsCaptureOpen(false);
     setCaptureDraft(EMPTY_CAPTURE_DRAFT);
     setHasPersistedContinuity(true);
-
+ 
     setGravityLedger((prev) =>
       reinforceSelection(prev, id, record.thread, Date.now())
     );
-
+ 
     syncPersistence(nextThoughts, { immediate: true });
   }, [captureDraft, persistedThoughts, syncPersistence]);
-
+ 
   const value = useMemo(
     () => ({
       activeNav,
@@ -499,6 +512,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       threadRelationships,
       memoryGravity,
       semanticIntegrity,
+      influenceField,
       setActiveNav,
       selectThread,
       toggleThread,
@@ -525,6 +539,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       threadRelationships,
       memoryGravity,
       semanticIntegrity,
+      influenceField,
       selectThread,
       toggleThread,
       openCapture,
@@ -533,18 +548,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       preserveThought,
     ]
   );
-
+ 
   return (
     <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>
   );
 }
-
+ 
 export function useWorkspace() {
   const ctx = useContext(WorkspaceContext);
   if (!ctx) throw new Error("useWorkspace must be used within WorkspaceProvider");
   return ctx;
 }
-
+ 
 export function useThreadSelection() {
   const {
     selectedThreadId,
@@ -555,7 +570,7 @@ export function useThreadSelection() {
     selectThread,
     toggleThread,
   } = useWorkspace();
-
+ 
   return {
     selectedThreadId,
     selectedThread,
@@ -567,7 +582,7 @@ export function useThreadSelection() {
     isSelected: (threadId: string) => selectedThreadId === threadId,
   };
 }
-
+ 
 export function useCapture() {
   const {
     isCaptureOpen,
@@ -579,7 +594,7 @@ export function useCapture() {
     updateCaptureDraft,
     preserveThought,
   } = useWorkspace();
-
+ 
   return {
     isCaptureOpen,
     captureDraft,
@@ -591,42 +606,48 @@ export function useCapture() {
     preserveThought,
   };
 }
-
+ 
 /** Merges user-captured threads with mock fixtures for feed grouping. */
 export function useFeedThreads() {
   const { capturedThreads } = useCapture();
-
+ 
   return useMemo(() => mergeFeedThreads(capturedThreads), [capturedThreads]);
 }
-
+ 
 export function useContinuitySession() {
   const { continuitySession, hasPersistedContinuity, isContinuityHydrated } =
     useWorkspace();
-
+ 
   return { continuitySession, hasPersistedContinuity, isContinuityHydrated };
 }
-
+ 
 export function useContinuityIntelligence() {
   const { continuityIntelligence } = useWorkspace();
   return continuityIntelligence;
 }
-
+ 
 export function useThreadRelationships() {
   const { threadRelationships } = useWorkspace();
   return threadRelationships;
 }
-
+ 
 export function useMemoryGravity() {
   const { memoryGravity } = useWorkspace();
   return memoryGravity;
 }
-
+ 
 export function useThreadGravityWeight(threadId: string): number {
   const { memoryGravity } = useWorkspace();
   return memoryGravity.weights.get(threadId) ?? 0;
 }
-
+ 
 export function useSemanticIntegrity() {
   const { semanticIntegrity } = useWorkspace();
   return semanticIntegrity;
+}
+ 
+/** Returns the full influence field for the current workspace state. */
+export function useInfluenceField(): InfluenceField {
+  const { influenceField } = useWorkspace();
+  return influenceField;
 }
